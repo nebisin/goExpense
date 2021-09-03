@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import "github.com/nebisin/goExpense/internal/app"
 
 func main() {
-	fmt.Println("Hello Expense")
+	s := app.NewServer()
+
+	s.Run()
 }
