@@ -32,7 +32,7 @@ RETURNING id, created_at, version`
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args).Scan(&user.ID, &user.CreatedAt, &user.IsActivated)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.ID, &user.CreatedAt, &user.Version)
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
@@ -93,7 +93,7 @@ RETURNING version`
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args).Scan(&user.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:

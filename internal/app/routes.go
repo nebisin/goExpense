@@ -17,6 +17,8 @@ func (s *server) setupRoutes() {
 	apiV1 := s.router.PathPrefix("/api/v1").Subrouter()
 
 	apiV1.HandleFunc("/healthcheck", s.handleHealthCheck)
+
+	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {

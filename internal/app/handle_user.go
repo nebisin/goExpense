@@ -1,0 +1,57 @@
+package app
+
+import (
+	"errors"
+	"github.com/nebisin/goExpense/internal/store"
+	"github.com/nebisin/goExpense/pkg/request"
+	"github.com/nebisin/goExpense/pkg/response"
+	"net/http"
+)
+
+func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Name     string `json:"name" validate:"required,max=500"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,max=72,min=8"`
+	}
+
+	if err := request.ReadJSON(w, r, &input); err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	if err := request.ValidateInput(&input); err != nil {
+		response.FailedValidationResponse(w, r, err)
+		return
+	}
+
+	user := &store.User{
+		Name:  input.Name,
+		Email: input.Email,
+		IsActivated: false,
+	}
+
+	if err := user.Password.Set(input.Password); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.Users.Insert(user); err != nil {
+		if errors.Is(err, store.ErrDuplicateEmail) {
+			errs := map[string]string{"email": "is already exist"}
+			response.FailedValidationResponse(w, r, errs)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+
+		return
+	}
+
+	// TODO: implement activation token and sending it via email
+
+	err := response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+}
