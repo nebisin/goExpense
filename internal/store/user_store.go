@@ -4,17 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/nebisin/goExpense/pkg/auth"
 	"time"
 )
 
 type User struct {
-	ID             int64     `json:"id"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	HashedPassword []byte    `json:"-"`
-	CreatedAt      time.Time `json:"created_at"`
-	IsActivated    bool      `json:"is_activated"`
-	Version        int       `json:"version"`
+	ID          int64         `json:"id"`
+	Name        string        `json:"name"`
+	Email       string        `json:"email"`
+	Password    auth.Password `json:"-"`
+	CreatedAt   time.Time     `json:"created_at"`
+	IsActivated bool          `json:"is_activated"`
+	Version     int           `json:"version"`
 }
 
 type userModel struct {
@@ -26,7 +27,7 @@ func (m *userModel) Insert(user *User) error {
 VALUES ($1, $2, $3, $4)
 RETURNING id, created_at, version`
 
-	args := []interface{}{user.Name, user.Email, user.HashedPassword, user.IsActivated}
+	args := []interface{}{user.Name, user.Email, user.Password.Hashed, user.IsActivated}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -59,7 +60,7 @@ WHERE email = $1`
 		&user.CreatedAt,
 		&user.Name,
 		&user.Email,
-		&user.HashedPassword,
+		&user.Password.Hashed,
 		&user.IsActivated,
 		&user.Version,
 	)
@@ -79,11 +80,11 @@ func (m *userModel) Update(user *User) error {
 SET name = $1, email=$2, hashed_password=$3, is_activated=$4, version=version+1
 WHERE id=$5 AND version=$6
 RETURNING version`
-	
+
 	args := []interface{}{
 		user.Name,
 		user.Email,
-		user.HashedPassword,
+		user.Password.Hashed,
 		user.IsActivated,
 		user.ID,
 		user.Version,
@@ -91,7 +92,7 @@ RETURNING version`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	err := m.DB.QueryRowContext(ctx, query, args).Scan(&user.Version)
 	if err != nil {
 		switch {
