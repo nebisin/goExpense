@@ -9,13 +9,13 @@ import (
 )
 
 type User struct {
-	ID          int64         `json:"id"`
-	Name        string        `json:"name"`
-	Email       string        `json:"email"`
-	Password    auth.Password `json:"-"`
-	CreatedAt   time.Time     `json:"created_at"`
-	IsActivated bool          `json:"is_activated"`
-	Version     int           `json:"version"`
+	ID          int64          `json:"id"`
+	Name        string         `json:"name"`
+	Email     string        `json:"email"`
+	Password  auth.Password `json:"-"`
+	CreatedAt time.Time     `json:"created_at"`
+	IsActivated bool           `json:"is_activated"`
+	Version     int            `json:"version"`
 }
 
 type userModel struct {
@@ -43,6 +43,36 @@ RETURNING id, created_at, version`
 	}
 
 	return nil
+}
+
+func (m *userModel) Get(id int64) (*User, error) {
+	query := `SELECT id, created_at, name, email, hashed_password, is_activated, version
+FROM users
+WHERE id = $1`
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Name,
+		&user.Email,
+		&user.Password.Hashed,
+		&user.IsActivated,
+		&user.Version,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (m *userModel) GetByEmail(email string) (*User, error) {

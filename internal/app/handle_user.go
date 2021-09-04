@@ -25,10 +25,11 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: Change IsActivated value after implementing activation
 	user := &store.User{
 		Name:  input.Name,
 		Email: input.Email,
-		IsActivated: false,
+		IsActivated: true,
 	}
 
 	if err := user.Password.Set(input.Password); err != nil {

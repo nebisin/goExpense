@@ -12,9 +12,10 @@ import (
 const version = "1.0.0"
 
 type config struct {
-	port  int
-	env   string
-	dbURI string
+	port      int
+	env       string
+	dbURI     string
+	jwtSecret string
 }
 
 type server struct {
@@ -63,6 +64,7 @@ func (s *server) getConfig() error {
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&cfg.dbURI, "db-uri", os.Getenv("DB_URI"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.jwtSecret, "jwt-secret", os.Getenv("TOKEN_SYMMETRIC_KEY"), "JWT Secret")
 
 	flag.Parse()
 
