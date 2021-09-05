@@ -52,3 +52,25 @@ func EditConflictResponse(w http.ResponseWriter, r *http.Request) {
 	message := "unable to update the record due to an edit conflict, please try again"
 	Error(w, http.StatusConflict, message)
 }
+
+func InvalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
+	message := "invalid authentication credentials"
+	Error(w, http.StatusUnauthorized, message)
+}
+
+func InvalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+
+	message := "invalid or missing authentication token"
+	Error(w, http.StatusUnauthorized, message)
+}
+
+func AuthenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you must be authenticated to access this resource"
+	Error(w, http.StatusUnauthorized, message)
+}
+
+func InactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account must be activated to access this resource"
+	Error(w, http.StatusForbidden, message)
+}

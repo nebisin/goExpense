@@ -1,7 +1,6 @@
 package app
 
 import (
-	"database/sql"
 	"flag"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -13,13 +12,13 @@ import (
 const version = "1.0.0"
 
 type config struct {
-	port  int
-	env   string
-	dbURI string
+	port      int
+	env       string
+	dbURI     string
+	jwtSecret string
 }
 
 type server struct {
-	db     *sql.DB
 	router *mux.Router
 	logger *logrus.Logger
 	config config
@@ -45,7 +44,6 @@ func (s *server) Run() {
 		s.logger.WithError(err).Fatal("something went wrong while connecting the database")
 	}
 	defer db.Close()
-	s.db = db
 	s.models = store.NewModels(db)
 
 	s.setupRoutes()
@@ -65,7 +63,8 @@ func (s *server) getConfig() error {
 
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.dbURI, "db-uri", os.Getenv("DB_URI"), "PosgreSQL DSN")
+	flag.StringVar(&cfg.dbURI, "db-uri", os.Getenv("DB_URI"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.jwtSecret, "jwt-secret", os.Getenv("TOKEN_SYMMETRIC_KEY"), "JWT Secret")
 
 	flag.Parse()
 
