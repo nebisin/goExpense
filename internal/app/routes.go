@@ -24,6 +24,7 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/authenticate", s.handleLoginUser).Methods(http.MethodPost)
 
 	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetTransaction)).Methods(http.MethodGet)
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {

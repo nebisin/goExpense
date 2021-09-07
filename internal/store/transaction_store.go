@@ -51,7 +51,7 @@ func (m *transactionModel) Get(id int64) (*Transaction, error) {
 		return nil, ErrRecordNotFound
 	}
 
-	query := `SELECT id, ts_type, title, description, amount, payday, created_at, version
+	query := `SELECT id, user_id, ts_type, title, description, amount, payday, created_at, version
 FROM transactions
 WHERE id = $1`
 
@@ -62,6 +62,7 @@ WHERE id = $1`
 
 	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&ts.ID,
+		&ts.UserID,
 		&ts.TSType,
 		&ts.Title,
 		&ts.Description,

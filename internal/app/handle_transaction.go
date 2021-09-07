@@ -1,10 +1,13 @@
 package app
 
 import (
+	"errors"
+	"github.com/gorilla/mux"
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/request"
 	"github.com/nebisin/goExpense/pkg/response"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -47,5 +50,35 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
+	}
+}
+
+func (s *server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	ts, err := s.models.Transactions.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	user := s.contextGetUser(r)
+
+	if ts.UserID != user.ID {
+		response.NotPermittedResponse(w, r)
+		return
+	}
+
+	if err := response.JSON(w, http.StatusOK, response.Envelope{"transaction": ts}); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
