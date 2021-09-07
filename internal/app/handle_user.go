@@ -29,8 +29,8 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Change IsActivated value after implementing activation
 	user := &store.User{
-		Name:  input.Name,
-		Email: input.Email,
+		Name:        input.Name,
+		Email:       input.Email,
 		IsActivated: true,
 	}
 
@@ -60,7 +60,7 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleLoginUser(w http.ResponseWriter, r *http.Request) {
-	var input struct{
+	var input struct {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required,max=72,min=8"`
 	}

@@ -8,11 +8,11 @@ import (
 
 func (s *server) serve() error {
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%d", s.config.port),
-		Handler: s.router,
-		ReadTimeout: 10 * time.Second,
+		Addr:         fmt.Sprintf(":%d", s.config.port),
+		Handler:      s.router,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		IdleTimeout: time.Minute,
+		IdleTimeout:  time.Minute,
 	}
 
 	s.logger.WithField("port", s.config.port).Info("starting the server")
