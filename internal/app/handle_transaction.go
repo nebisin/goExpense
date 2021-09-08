@@ -13,11 +13,11 @@ import (
 
 func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		TSType      string  `json:"ts_type" validate:"required,oneof='expense' 'income'"`
-		Title       string  `json:"title" validate:"required,max=180"`
-		Description string  `json:"description,omitempty" validate:"max=1000"`
-		Amount      float64 `json:"amount" validate:"required"`
-		Payday      int64   `json:"payday" validate:"required"`
+		Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
+		Title       string    `json:"title" validate:"required,max=180"`
+		Description string    `json:"description,omitempty" validate:"max=1000"`
+		Amount      float64   `json:"amount" validate:"required"`
+		Payday      time.Time `json:"payday" validate:"required"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
@@ -34,11 +34,11 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 
 	ts := &store.Transaction{
 		UserID:      user.ID,
-		TSType:      input.TSType,
+		Type:        input.Type,
 		Title:       input.Title,
 		Description: input.Description,
 		Amount:      input.Amount,
-		Payday:      time.UnixMilli(input.Payday),
+		Payday:      input.Payday,
 	}
 
 	if err := s.models.Transactions.Insert(ts); err != nil {
