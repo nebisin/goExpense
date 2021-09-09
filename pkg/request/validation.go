@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func ValidateInput(input interface{}) map[string]string {
+func Validate(input interface{}) map[string]string {
 	validate := validator.New()
 
 	if err := validate.Struct(input); err != nil {

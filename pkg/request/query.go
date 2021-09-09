@@ -40,4 +40,3 @@ func ReadInt(qs url.Values, key string, defaultValue int) int {
 
 	return l
 }
-

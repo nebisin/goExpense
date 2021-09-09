@@ -1,9 +1,10 @@
 package app
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/nebisin/goExpense/pkg/response"
-	"net/http"
 )
 
 func (s *server) setupRoutes() {
@@ -22,6 +23,12 @@ func (s *server) setupRoutes() {
 
 	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
 	apiV1.HandleFunc("/authenticate", s.handleLoginUser).Methods(http.MethodPost)
+
+	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetTransaction)).Methods(http.MethodGet)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteTransaction)).Methods(http.MethodDelete)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateTransaction)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleListTransactions)).Methods(http.MethodGet)
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {

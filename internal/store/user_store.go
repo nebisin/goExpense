@@ -9,13 +9,13 @@ import (
 )
 
 type User struct {
-	ID          int64          `json:"id"`
-	Name        string         `json:"name"`
-	Email     string        `json:"email"`
-	Password  auth.Password `json:"-"`
-	CreatedAt time.Time     `json:"created_at"`
-	IsActivated bool           `json:"is_activated"`
-	Version     int            `json:"version"`
+	ID          int64         `json:"id"`
+	Name        string        `json:"name"`
+	Email       string        `json:"email"`
+	Password    auth.Password `json:"-"`
+	CreatedAt   time.Time     `json:"created_at"`
+	IsActivated bool          `json:"is_activated"`
+	Version     int           `json:"version"`
 }
 
 var AnonymousUser = &User{}
