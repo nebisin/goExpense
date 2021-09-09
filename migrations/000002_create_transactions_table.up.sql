@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS transactions
     user_id     bigint                      NOT NULL REFERENCES users ON DELETE CASCADE,
     type        text                        NOT NULL,
     title       text                        NOT NULL,
-    description text                        NOT NULL,
+    description text,
     amount      float8                      NOT NULL,
     payday      timestamp(0) with time zone NOT NULL,
     created_at  timestamp(0) with time zone NOT NULL DEFAULT now(),
