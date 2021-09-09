@@ -206,8 +206,6 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: add user id into the process
-
 	user := s.contextGetUser(r)
 
 	transactions, err := s.models.Transactions.GetAll(user.ID, input.Title, input.Filters)
