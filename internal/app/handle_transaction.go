@@ -36,7 +36,7 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		Payday:      input.Payday,
 	}
 
-	if err := request.ValidateInput(ts); err != nil {
+	if err := request.Validate(ts); err != nil {
 		response.FailedValidationResponse(w, r, err)
 		return
 	}
@@ -166,7 +166,7 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 		ts.Payday = *input.Payday
 	}
 
-	if err := request.ValidateInput(ts); err != nil {
+	if err := request.Validate(ts); err != nil {
 		response.FailedValidationResponse(w, r, err)
 		return
 	}

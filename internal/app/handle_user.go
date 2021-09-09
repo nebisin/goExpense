@@ -22,7 +22,7 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := request.ValidateInput(&input); err != nil {
+	if err := request.Validate(&input); err != nil {
 		response.FailedValidationResponse(w, r, err)
 		return
 	}
@@ -70,7 +70,7 @@ func (s *server) handleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := request.ValidateInput(&input); err != nil {
+	if err := request.Validate(&input); err != nil {
 		response.FailedValidationResponse(w, r, err)
 		return
 	}
