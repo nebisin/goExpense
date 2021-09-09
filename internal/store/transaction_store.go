@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -130,6 +131,48 @@ WHERE id = $1 AND user_id = $2`
 
 // TODO: Implement GetAll method
 
-func (m *transactionModel) GetAll(title string, filters Filters) ([]*Transaction, error) {
-	return nil, nil
+func (m *transactionModel) GetAll(user_id int64, title string, filters Filters) ([]*Transaction, error) {
+	query := fmt.Sprintf(`SELECT id, user_id, type, title, description, amount, payday, created_at, version
+	FROM transactions
+	WHERE user_id = $1 AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
+	ORDER BY %s %s, id ASC
+	LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, user_id, title, filters.Limit, filters.offset())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	transactions := []*Transaction{}
+
+	for rows.Next() {
+		var ts Transaction
+
+		err := rows.Scan(
+			&ts.ID,
+			&ts.UserID,
+			&ts.Type,
+			&ts.Title,
+			&ts.Description,
+			&ts.Amount,
+			&ts.Payday,
+			&ts.CreatedAt,
+			&ts.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, &ts)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
 }

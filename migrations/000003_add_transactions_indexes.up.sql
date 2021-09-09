@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS transactions_title_idx ON transactions USING gin (to_tsvector('simple', title));

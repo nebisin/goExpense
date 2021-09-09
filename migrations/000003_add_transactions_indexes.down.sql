@@ -1,0 +1,1 @@
+DROP INDEX IF EXIST transactions_title_idx;

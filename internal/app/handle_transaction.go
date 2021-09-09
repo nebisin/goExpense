@@ -2,13 +2,14 @@ package app
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/request"
 	"github.com/nebisin/goExpense/pkg/response"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +182,41 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := response.JSON(w, http.StatusOK, response.Envelope{"transaction": ts}); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Title string
+		store.Filters
+	}
+
+	qs := r.URL.Query()
+
+	input.Title = request.ReadString(qs, "title", "")
+
+	input.Filters.Page = request.ReadInt(qs, "page", 1)
+	input.Filters.Limit = request.ReadInt(qs, "limit", 20)
+
+	input.Filters.Sort = request.ReadString(qs, "sort", "id")
+
+	if errs := request.Validate(input); errs != nil {
+		response.FailedValidationResponse(w, r, errs)
+		return
+	}
+
+	// TODO: add user id into the process
+
+	user := s.contextGetUser(r)
+
+	transactions, err := s.models.Transactions.GetAll(user.ID, input.Title, input.Filters)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := response.JSON(w, http.StatusOK, response.Envelope{"transactions": transactions}); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }

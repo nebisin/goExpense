@@ -5,7 +5,7 @@ import "strings"
 type Filters struct {
 	Page  int    `json:"page" validate:"gt=0"`
 	Limit int    `json:"limit" validate:"gt=0,lt=100"`
-	Sort  string `json:"sort" validate:"oneof='id' 'title' '-id' '-title'"`
+	Sort  string `json:"sort" validate:"oneof='id' 'title' 'payday' '-id' '-title' '-payday'"`
 }
 
 func (f Filters) sortColumn() string {
