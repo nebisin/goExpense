@@ -18,7 +18,7 @@ type Models struct {
 
 func NewModels(db *sql.DB) *Models {
 	return &Models{
-		Users: userModel{DB: db},
+		Users:        userModel{DB: db},
 		Transactions: transactionModel{DB: db},
 	}
 }
