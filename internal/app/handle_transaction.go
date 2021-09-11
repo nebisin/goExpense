@@ -188,7 +188,9 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 
 func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title string
+		Title     string
+		Before    time.Time
+		StartedAt time.Time
 		store.Filters
 	}
 
@@ -201,6 +203,9 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 
 	input.Filters.Sort = request.ReadString(qs, "sort", "id")
 
+	input.Before = request.ReadTime(qs, "before", time.Now().AddDate(3, 0, 0))
+	input.StartedAt = request.ReadTime(qs, "started_at", time.Unix(0, 0))
+
 	if errs := request.Validate(input); errs != nil {
 		response.FailedValidationResponse(w, r, errs)
 		return
@@ -208,43 +213,13 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 
 	user := s.contextGetUser(r)
 
-	transactions, err := s.models.Transactions.GetAll(user.ID, input.Title, input.Filters)
+	transactions, err := s.models.Transactions.GetAll(user.ID, input.Title, input.StartedAt, input.Before, input.Filters)
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}
 
 	if err := response.JSON(w, http.StatusOK, response.Envelope{"transactions": transactions}); err != nil {
-		response.ServerErrorResponse(w, r, s.logger, err)
-	}
-}
-
-func (s *server) handleListTransactionsByDate(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		startedAt time.Time
-		before    time.Time
-	}
-
-	qs := r.URL.Query()
-
-	input.before = request.ReadTime(qs, "before", time.Now())
-	input.startedAt = request.ReadTime(qs, "started_at", time.Now().AddDate(0, -1, 0))
-
-	user := s.contextGetUser(r)
-
-	transactions, err := s.models.Transactions.GetAllByPayday(user.ID, input.startedAt, input.before)
-	if err != nil {
-		if errors.Is(err, store.ErrLongDuration) {
-			response.BadRequestResponse(w, r, err)
-		} else {
-			response.ServerErrorResponse(w, r, s.logger, err)
-		}
-
-		return
-	}
-
-	err = response.JSON(w, http.StatusOK, response.Envelope{"transactions": transactions})
-	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
