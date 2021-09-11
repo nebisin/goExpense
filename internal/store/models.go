@@ -9,6 +9,7 @@ var (
 	ErrRecordNotFound = errors.New("record not found")
 	ErrEditConflict   = errors.New("edit conflict")
 	ErrDuplicateEmail = errors.New("duplicate email")
+	ErrLongDuration   = errors.New("duration cannot be longer than one month")
 )
 
 type Models struct {

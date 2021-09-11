@@ -176,3 +176,51 @@ func (m *transactionModel) GetAll(user_id int64, title string, filters Filters) 
 
 	return transactions, nil
 }
+
+func (m *transactionModel) GetAllByPayday(user_id int64, startedAt time.Time, before time.Time) ([]*Transaction, error) {
+	if before.Sub(startedAt) > time.Duration(time.Hour*24*32) {
+		return nil, ErrLongDuration
+	}
+
+	query := `SELECT id, user_id, type, title, description, amount, payday, created_at, version 
+	FROM transactions
+	WHERE user_id=$1 AND payday >= $2 AND payday < $3`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, user_id, startedAt, before)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	transactions := []*Transaction{}
+
+	for rows.Next() {
+		var ts Transaction
+
+		err := rows.Scan(
+			&ts.ID,
+			&ts.UserID,
+			&ts.Type,
+			&ts.Title,
+			&ts.Description,
+			&ts.Amount,
+			&ts.Payday,
+			&ts.CreatedAt,
+			&ts.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, &ts)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
+}

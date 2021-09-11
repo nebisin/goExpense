@@ -218,3 +218,33 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
+
+func (s *server) handleListTransactionsByDate(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		startedAt time.Time
+		before    time.Time
+	}
+
+	qs := r.URL.Query()
+
+	input.before = request.ReadTime(qs, "before", time.Now())
+	input.startedAt = request.ReadTime(qs, "started_at", time.Now().AddDate(0, -1, 0))
+
+	user := s.contextGetUser(r)
+
+	transactions, err := s.models.Transactions.GetAllByPayday(user.ID, input.startedAt, input.before)
+	if err != nil {
+		if errors.Is(err, store.ErrLongDuration) {
+			response.BadRequestResponse(w, r, err)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+
+		return
+	}
+
+	err = response.JSON(w, http.StatusOK, response.Envelope{"transactions": transactions})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}

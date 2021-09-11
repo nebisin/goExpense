@@ -29,6 +29,7 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteTransaction)).Methods(http.MethodDelete)
 	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateTransaction)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleListTransactions)).Methods(http.MethodGet)
+	apiV1.HandleFunc("/transactions/by_date", s.requireAuthenticatedUser(s.handleListTransactionsByDate)).Methods(http.MethodGet)
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
