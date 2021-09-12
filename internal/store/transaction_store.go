@@ -11,11 +11,11 @@ import (
 type Transaction struct {
 	ID          int64     `json:"id"`
 	UserID      int64     `json:"user_id"`
-	Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
-	Title       string    `json:"title" validate:"required,max=180"`
-	Description string    `json:"description,omitempty" validate:"max=1000"`
-	Amount      float64   `json:"amount" validate:"required"`
-	Payday      time.Time `json:"payday" validate:"required"`
+	Type        string    `json:"type"`
+	Title       string    `json:"title"`
+	Description string    `json:"description,omitempty"`
+	Amount      float64   `json:"amount"`
+	Payday      time.Time `json:"payday"`
 	CreatedAt   time.Time `json:"created_at"`
 	Version     int       `json:"version"`
 	//AccountID   int64     `json:"account_id,omitempty"`
