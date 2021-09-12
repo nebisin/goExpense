@@ -2,12 +2,13 @@ package app
 
 import (
 	"errors"
+	"net/http"
+	"time"
+
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/auth"
 	"github.com/nebisin/goExpense/pkg/request"
 	"github.com/nebisin/goExpense/pkg/response"
-	"net/http"
-	"time"
 )
 
 func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
@@ -111,5 +112,71 @@ func (s *server) handleLoginUser(w http.ResponseWriter, r *http.Request) {
 	err = response.JSON(w, http.StatusOK, response.Envelope{"authentication_token": token})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Name        string `json:"name,omitempty" validate:"omitempty,max=500"`
+		Email       string `json:"email,omitempty" validate:"omitempty,email"`
+		Password    string `json:"password,omitempty" validate:"omitempty,max=72,min=8"`
+		OldPassword string `json:"old_password,omitempty"`
+	}
+
+	if err := request.ReadJSON(w, r, &input); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
+		return
+	}
+
+	user := s.contextGetUser(r)
+
+	if input.Name != "" {
+		user.Name = input.Name
+	}
+
+	if input.Email != "" {
+		user.Email = input.Email
+	}
+
+	if input.Password != "" {
+		match, err := user.Password.Matches(input.OldPassword)
+		if err != nil {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+
+		if !match {
+			response.InvalidCredentialsResponse(w, r)
+			return
+		}
+
+		if err := user.Password.Set(input.Password); err != nil {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+	}
+
+	if err := s.models.Users.Update(user); err != nil {
+		if errors.Is(err, store.ErrDuplicateEmail) {
+			errs := map[string]string{"email": "is already exist"}
+			response.FailedValidationResponse(w, r, errs)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+
+		return
+	}
+
+	// TODO: If email is changed send activation token to the new address
+
+	err := response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
 	}
 }
