@@ -14,15 +14,20 @@ import (
 
 func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Type        string    `json:"type"`
-		Title       string    `json:"title"`
-		Description string    `json:"description,omitempty"`
-		Amount      float64   `json:"amount"`
-		Payday      time.Time `json:"payday"`
+		Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
+		Title       string    `json:"title" validate:"required,min=3,max=180"`
+		Description string    `json:"description,omitempty" validate:"max=1000"`
+		Amount      float64   `json:"amount" validate:"required"`
+		Payday      time.Time `json:"payday" validate:"required"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
 		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
 		return
 	}
 
@@ -35,11 +40,6 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		Description: input.Description,
 		Amount:      input.Amount,
 		Payday:      input.Payday,
-	}
-
-	if err := request.Validate(ts); err != nil {
-		response.FailedValidationResponse(w, r, err)
-		return
 	}
 
 	if err := s.models.Transactions.Insert(ts); err != nil {
@@ -135,15 +135,20 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 	}
 
 	var input struct {
-		Type        *string    `json:"type"`
-		Title       *string    `json:"title"`
-		Description *string    `json:"description"`
-		Amount      *float64   `json:"amount"`
-		Payday      *time.Time `json:"payday"`
+		Type        *string    `json:"type,omitempty" validate:"omitempty,oneof='expense' 'income'"`
+		Title       *string    `json:"title,omitempty" validate:"omitempty,min=3,max=180"`
+		Description *string    `json:"description,omitempty" validate:"omitempty,max=1000"`
+		Amount      *float64   `json:"amount,omitempty"`
+		Payday      *time.Time `json:"payday,omitempty"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
 		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
 		return
 	}
 
@@ -165,11 +170,6 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 
 	if input.Payday != nil {
 		ts.Payday = *input.Payday
-	}
-
-	if err := request.Validate(ts); err != nil {
-		response.FailedValidationResponse(w, r, err)
-		return
 	}
 
 	if err := s.models.Transactions.Update(ts); err != nil {

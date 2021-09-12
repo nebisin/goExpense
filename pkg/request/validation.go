@@ -2,8 +2,9 @@ package request
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func Validate(input interface{}) map[string]string {
@@ -31,6 +32,8 @@ func Validate(input interface{}) map[string]string {
 				errorMap[key] = fmt.Sprintf("length must be minimum %s long", fieldError.Param())
 			case fieldError.Tag() == "email":
 				errorMap[key] = "must be a valid email"
+			case fieldError.Tag() == "required_with":
+				errorMap[key] = fmt.Sprintf("must be provided with %s", fieldError.Param())
 			default:
 				errorMap[key] = fmt.Sprint(fieldError.Error())
 			}

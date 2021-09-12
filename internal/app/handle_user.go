@@ -117,10 +117,10 @@ func (s *server) handleLoginUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name        string `json:"name,omitempty" validate:"omitempty,max=500"`
-		Email       string `json:"email,omitempty" validate:"omitempty,email"`
-		Password    string `json:"password,omitempty" validate:"omitempty,max=72,min=8"`
-		OldPassword string `json:"old_password,omitempty"`
+		Name        *string `json:"name,omitempty" validate:"omitempty,min=3,max=500"`
+		Email       *string `json:"email,omitempty" validate:"omitempty,email"`
+		Password    *string `json:"password,omitempty" validate:"omitempty,max=72,min=8"`
+		OldPassword *string `json:"old_password,omitempty" validate:"required_with=Password"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
@@ -135,16 +135,16 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user := s.contextGetUser(r)
 
-	if input.Name != "" {
-		user.Name = input.Name
+	if input.Name != nil {
+		user.Name = *input.Name
 	}
 
-	if input.Email != "" {
-		user.Email = input.Email
+	if input.Email != nil {
+		user.Email = *input.Email
 	}
 
-	if input.Password != "" {
-		match, err := user.Password.Matches(input.OldPassword)
+	if input.Password != nil {
+		match, err := user.Password.Matches(*input.OldPassword)
 		if err != nil {
 			response.ServerErrorResponse(w, r, s.logger, err)
 			return
@@ -155,7 +155,7 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := user.Password.Set(input.Password); err != nil {
+		if err := user.Password.Set(*input.Password); err != nil {
 			response.ServerErrorResponse(w, r, s.logger, err)
 			return
 		}
@@ -174,7 +174,7 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: If email is changed send activation token to the new address
 
-	err := response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
+	err := response.JSON(w, http.StatusOK, response.Envelope{"user": user})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
