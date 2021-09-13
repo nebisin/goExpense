@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -28,11 +29,10 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Change IsActivated value after implementing activation
 	user := &store.User{
 		Name:        input.Name,
 		Email:       input.Email,
-		IsActivated: true,
+		IsActivated: false,
 	}
 
 	if err := user.Password.Set(input.Password); err != nil {
@@ -51,9 +51,16 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: implement activation token and sending it via email
+	token, err := s.models.Tokens.New(user.ID, 3*24*time.Hour, store.ScopeActivation)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
 
-	err := response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
+	// TODO: Send activation token via email
+	fmt.Println(token.Plaintext) // delete after implementing activation email
+
+	err = response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
@@ -139,8 +146,11 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Name = *input.Name
 	}
 
-	if input.Email != nil {
+	isEmailChanged := false
+	if input.Email != nil && user.Email != *input.Email {
+		isEmailChanged = true
 		user.Email = *input.Email
+		user.IsActivated = false
 	}
 
 	if input.Password != nil {
@@ -172,11 +182,66 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: If email is changed send activation token to the new address
+	if isEmailChanged {
+		token, err := s.models.Tokens.New(user.ID, 3*24*time.Hour, store.ScopeActivation)
+		if err != nil {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+
+		// TODO: Send activation token via email
+		fmt.Println(token.Plaintext) // delete after implementing activation email
+	}
 
 	err := response.JSON(w, http.StatusOK, response.Envelope{"user": user})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
+	}
+}
+
+func (s *server) handleActivateUser(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		TokenPlainText string `json:"token" validator:"required,max=26"`
+	}
+
+	if err := request.ReadJSON(w, r, &input); err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
+		return
+	}
+
+	user, err := s.models.Users.GetForToken(store.ScopeActivation, input.TokenPlainText)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.FailedValidationResponse(w, r, map[string]string{"token": "invalid or expired activation token"})
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	user.IsActivated = true
+
+	if err := s.models.Users.Update(user); err != nil {
+		if errors.Is(err, store.ErrEditConflict) {
+			response.EditConflictResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if err := s.models.Tokens.DeleteAllForUser(store.ScopeActivation, user.ID); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := response.JSON(w, http.StatusOK, response.Envelope{"user": user}); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }

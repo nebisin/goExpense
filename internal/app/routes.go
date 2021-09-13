@@ -22,8 +22,10 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/healthcheck", s.handleHealthCheck)
 
 	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
-	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/users/activate", s.handleActivateUser).Methods(http.MethodPut)
 	apiV1.HandleFunc("/authenticate", s.handleLoginUser).Methods(http.MethodPost)
+
+	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
 
 	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
 	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetTransaction)).Methods(http.MethodGet)

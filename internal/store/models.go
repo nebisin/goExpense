@@ -15,11 +15,13 @@ var (
 type Models struct {
 	Users        userModel
 	Transactions transactionModel
+	Tokens       tokenModel
 }
 
 func NewModels(db *sql.DB) *Models {
 	return &Models{
 		Users:        userModel{DB: db},
 		Transactions: transactionModel{DB: db},
+		Tokens:       tokenModel{DB: db},
 	}
 }
