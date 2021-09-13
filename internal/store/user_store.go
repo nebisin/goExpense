@@ -2,10 +2,12 @@ package store
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
-	"github.com/nebisin/goExpense/pkg/auth"
 	"time"
+
+	"github.com/nebisin/goExpense/pkg/auth"
 )
 
 type User struct {
@@ -142,4 +144,40 @@ RETURNING version`
 	}
 
 	return nil
+}
+
+func (m *userModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
+	query := `SELECT users.id, users.created_at, users.name, users.email, users.hashed_password, users.is_activated, users.version
+	FROM users
+	INNER JOIN tokens
+	ON users.id = tokens.user_id
+	WHERE tokens.hash = $1 AND tokens.scope = $2 AND tokens.expiry > $3`
+
+	args := []interface{}{tokenHash[:], tokenScope, time.Now()}
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Name,
+		&user.Email,
+		&user.Password.Hashed,
+		&user.IsActivated,
+		&user.Version,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrRecordNotFound
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
 }

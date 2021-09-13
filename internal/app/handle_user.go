@@ -28,11 +28,10 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Change IsActivated value after implementing activation
 	user := &store.User{
 		Name:        input.Name,
 		Email:       input.Email,
-		IsActivated: true,
+		IsActivated: false,
 	}
 
 	if err := user.Password.Set(input.Password); err != nil {
@@ -51,9 +50,15 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: implement activation token and sending it via email
+	_, err := s.models.Tokens.New(user.ID, 3*24*time.Hour, store.ScopeActivation)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
 
-	err := response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
+	// TODO: Send activation token via email
+
+	err = response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
@@ -139,8 +144,11 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Name = *input.Name
 	}
 
-	if input.Email != nil {
+	isEmailChanged := false
+	if input.Email != nil && user.Email != *input.Email {
+		isEmailChanged = true
 		user.Email = *input.Email
+		user.IsActivated = false
 	}
 
 	if input.Password != nil {
@@ -172,7 +180,15 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: If email is changed send activation token to the new address
+	if isEmailChanged {
+		_, err := s.models.Tokens.New(user.ID, 3*24*time.Hour, store.ScopeActivation)
+		if err != nil {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+
+		// TODO: Send activation token via email
+	}
 
 	err := response.JSON(w, http.StatusOK, response.Envelope{"user": user})
 	if err != nil {
