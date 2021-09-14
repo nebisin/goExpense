@@ -1,0 +1,43 @@
+{{define "subject"}}Welcome to goExpense{{end}}
+
+{{define "plainBody"}}
+Hi,
+
+Thanks for signing up for a goExpese account. We're excited to have you on board.
+
+For feature references, your user ID number is {{.userID}}.
+
+Please send a request to `PUT /v1/api/users/activate` endpoint with the following JSON body to activate your account:
+
+{"token": "{{.activationToken}}"}
+
+Please note that this is a one-time use token and it will expire in 3 days.
+
+Thanks,
+
+The goExpense Team
+{{end}}
+
+{{define "htmlBody"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <p>Hi,</p>
+    <p>Thanks for signing up for a goExpese account. We're excited to have you on board.</p>
+    <p>For future reference, your user ID number is {{.ID}}.</p>
+    <p>Please send a request to <code>PUT /v1/api/users/activate</code> endpoint with the following JSON body to activate your account:</p>
+    <pre>
+        <code>
+            {"token": "{{.activationToken}}"}
+        </code>
+    </pre>
+    <p>Please note that this is a one-time use token and it will expire in 3 days.</p>
+    <p>Thanks,</p>
+    <p>The goExpense Team</p>
+</body>
+</html>
+{{end}}
