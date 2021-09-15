@@ -57,8 +57,19 @@ func (s *server) handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Send activation token via email
-	fmt.Println(token.Plaintext) // delete after implementing activation email
+	s.background(func() {
+		data := map[string]interface{}{
+			"activationToken": token.Plaintext,
+			"userID":          user.ID,
+		}
+
+		if err := s.mailer.Send(user.Email, "user_welcome.tmpl", data); err != nil {
+			s.logger.WithFields(map[string]interface{}{
+				"request_method": r.Method,
+				"request_url":    r.URL.String(),
+			}).WithError(err).Error("background email error")
+		}
+	})
 
 	err = response.JSON(w, http.StatusCreated, response.Envelope{"user": user})
 	if err != nil {
