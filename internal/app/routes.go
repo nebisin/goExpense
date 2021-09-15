@@ -1,7 +1,9 @@
 package app
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/nebisin/goExpense/pkg/response"
@@ -35,6 +37,14 @@ func (s *server) setupRoutes() {
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := s.db.PingContext(ctx); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
 	err := response.JSON(w, http.StatusOK, response.Envelope{
 		"status":      "available",
 		"environment": s.config.env,
