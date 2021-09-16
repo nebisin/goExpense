@@ -2,7 +2,6 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -200,8 +199,18 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: Send activation token via email
-		fmt.Println(token.Plaintext) // delete after implementing activation email
+		s.background(func() {
+			data := map[string]interface{}{
+				"activationToken": token.Plaintext,
+			}
+
+			if err := s.mailer.Send(user.Email, "change_mail.tmpl", data); err != nil {
+				s.logger.WithFields(map[string]interface{}{
+					"request_method": r.Method,
+					"request_url":    r.URL.String(),
+				}).WithError(err).Error("background email error")
+			}
+		})
 	}
 
 	err := response.JSON(w, http.StatusOK, response.Envelope{"user": user})

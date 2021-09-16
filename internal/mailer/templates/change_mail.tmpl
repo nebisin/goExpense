@@ -1,0 +1,44 @@
+{{define "subject"}}Activate new e-mail to ihtisap{{end}}
+
+{{define "plainBody"}}
+Hi,
+
+You e-mail is changed.
+
+Please send a request to `PUT /v1/api/users/activate` endpoint with the following JSON body to activate your account:
+
+{"token": "{{.activationToken}}"}
+
+Please note that this is a one-time use token and it will expire in 3 days.
+
+Thanks,
+
+The ihtisap Team
+{{end}}
+
+{{define "htmlBody"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <p>Hi,</p>
+    <p>You e-mail is changed.</p>
+    <p>Please send a request to <code>PUT /v1/api/users/activate</code> endpoint with the following JSON body to
+        activate your account:</p>
+    <pre>
+        <code>
+            {"token": "{{.activationToken}}"}
+        </code>
+    </pre>
+    <p>Please note that this is a one-time use token and it will expire in 3 days.</p>
+    <p>Thanks,</p>
+    <p>The ihtisap Team</p>
+</body>
+
+</html>
+{{end}}
