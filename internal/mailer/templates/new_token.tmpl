@@ -1,11 +1,9 @@
-{{define "subject"}}Welcome to ihtisap{{end}}
+{{define "subject"}}New activation token for ihtisap{{end}}
 
 {{define "plainBody"}}
 Hi,
 
-Thanks for signing up for a ihtisap account. We're excited to have you on board.
-
-For feature references, your user ID number is {{.userID}}.
+We're sending this e-mail on your request. This is your new activation token for ihtisap.
 
 Please send a request to `PUT /v1/api/users/activate` endpoint with the following JSON body to activate your account:
 
@@ -27,8 +25,7 @@ The ihtisap Team
 </head>
 <body>
     <p>Hi,</p>
-    <p>Thanks for signing up for a ihtisap account. We're excited to have you on board.</p>
-    <p>For future reference, your user ID number is {{.ID}}.</p>
+    <p>We're sending this e-mail on your request. This is your new activation token for ihtisap.</p>
     <p>Please send a request to <code>PUT /v1/api/users/activate</code> endpoint with the following JSON body to activate your account:</p>
     <pre>
         <code>

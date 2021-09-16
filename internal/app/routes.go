@@ -25,14 +25,15 @@ func (s *server) setupRoutes() {
 
 	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users/activate", s.handleActivateUser).Methods(http.MethodPut)
-	apiV1.HandleFunc("/authenticate", s.handleLoginUser).Methods(http.MethodPost)
+	apiV1.HandleFunc("/users/authenticate", s.handleLoginUser).Methods(http.MethodPost)
 
+	apiV1.HandleFunc("/users/activationtoken", s.requireAuthenticatedUser(s.handleNewActivationToken)).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
 
-	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
+	apiV1.HandleFunc("/transactions", s.requireActivatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireActivatedUser(s.handleDeleteTransaction)).Methods(http.MethodDelete)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireActivatedUser(s.handleUpdateTransaction)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetTransaction)).Methods(http.MethodGet)
-	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteTransaction)).Methods(http.MethodDelete)
-	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateTransaction)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleListTransactions)).Methods(http.MethodGet)
 }
 
