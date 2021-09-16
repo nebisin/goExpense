@@ -25,8 +25,9 @@ func (s *server) setupRoutes() {
 
 	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users/activate", s.handleActivateUser).Methods(http.MethodPut)
-	apiV1.HandleFunc("/authenticate", s.handleLoginUser).Methods(http.MethodPost)
+	apiV1.HandleFunc("/users/authenticate", s.handleLoginUser).Methods(http.MethodPost)
 
+	apiV1.HandleFunc("/users/activationtoken", s.requireAuthenticatedUser(s.handleNewActivationToken)).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
 
 	apiV1.HandleFunc("/transactions", s.requireActivatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
