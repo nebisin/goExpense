@@ -185,6 +185,8 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, store.ErrDuplicateEmail) {
 			errs := map[string]string{"email": "is already exist"}
 			response.FailedValidationResponse(w, r, errs)
+		} else if errors.Is(err, store.ErrEditConflict) {
+			response.EditConflictResponse(w, r)
 		} else {
 			response.ServerErrorResponse(w, r, s.logger, err)
 		}
@@ -263,5 +265,58 @@ func (s *server) handleActivateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := response.JSON(w, http.StatusOK, response.Envelope{"user": user}); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Password       string `json:"password" validate:"required,max=72,min=8"`
+		TokenPlainText string `json:"token" validator:"required,max=26"`
+	}
+
+	if err := request.ReadJSON(w, r, &input); err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
+		return
+	}
+
+	user, err := s.models.Users.GetForToken(store.ScopePasswordReset, input.TokenPlainText)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.FailedValidationResponse(w, r, map[string]string{"token": "invalid or expired password reset token"})
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if err := user.Password.Set(input.Password); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.Users.Update(user); err != nil {
+		if errors.Is(err, store.ErrEditConflict) {
+			response.EditConflictResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if err := s.models.Tokens.DeleteAllForUser(store.ScopePasswordReset, user.ID); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	env := response.Envelope{"message": "your password was successfully reset"}
+	err = response.JSON(w, http.StatusOK, env)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
 	}
 }

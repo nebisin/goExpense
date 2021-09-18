@@ -27,6 +27,7 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/users/activate", s.handleActivateUser).Methods(http.MethodPut)
 	apiV1.HandleFunc("/users/authenticate", s.handleLoginUser).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/users/password", s.handlePasswordReset).Methods(http.MethodPut)
 
 	apiV1.HandleFunc("/tokens/password-reset", s.handleCreatePasswordResetToken).Methods(http.MethodPost)
 	apiV1.HandleFunc("/tokens/activation", s.handleNewActivationToken).Methods(http.MethodPost)
