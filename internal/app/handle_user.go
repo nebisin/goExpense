@@ -185,6 +185,8 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, store.ErrDuplicateEmail) {
 			errs := map[string]string{"email": "is already exist"}
 			response.FailedValidationResponse(w, r, errs)
+		} else if errors.Is(err, store.ErrEditConflict) {
+			response.EditConflictResponse(w, r)
 		} else {
 			response.ServerErrorResponse(w, r, s.logger, err)
 		}
@@ -266,39 +268,55 @@ func (s *server) handleActivateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) handleNewActivationToken(w http.ResponseWriter, r *http.Request) {
-	user := s.contextGetUser(r)
+func (s *server) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Password       string `json:"password" validate:"required,max=72,min=8"`
+		TokenPlainText string `json:"token" validator:"required,max=26"`
+	}
 
-	if user.IsActivated {
-		response.BadRequestResponse(w, r, errors.New("your account is already active"))
+	if err := request.ReadJSON(w, r, &input); err != nil {
+		response.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err := s.models.Tokens.DeleteAllForUser(store.ScopeActivation, user.ID); err != nil {
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
+		return
+	}
+
+	user, err := s.models.Users.GetForToken(store.ScopePasswordReset, input.TokenPlainText)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.FailedValidationResponse(w, r, map[string]string{"token": "invalid or expired password reset token"})
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if err := user.Password.Set(input.Password); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}
 
-	token, err := s.models.Tokens.New(user.ID, 3*24*time.Hour, store.ScopeActivation)
+	if err := s.models.Users.Update(user); err != nil {
+		if errors.Is(err, store.ErrEditConflict) {
+			response.EditConflictResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if err := s.models.Tokens.DeleteAllForUser(store.ScopePasswordReset, user.ID); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	env := response.Envelope{"message": "your password was successfully reset"}
+	err = response.JSON(w, http.StatusOK, env)
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
-	}
-
-	s.background(func() {
-		data := map[string]interface{}{
-			"activationToken": token.Plaintext,
-		}
-
-		if err := s.mailer.Send(user.Email, "new_token.tmpl", data); err != nil {
-			s.logger.WithFields(map[string]interface{}{
-				"request_method": r.Method,
-				"request_url":    r.URL.String(),
-			}).WithError(err).Error("background email error")
-		}
-	})
-
-	if err := response.JSON(w, http.StatusAccepted, response.Envelope{}); err != nil {
-		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
