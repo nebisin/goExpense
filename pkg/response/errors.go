@@ -2,8 +2,9 @@ package response
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Error is the default response function for errors. It takes http.ResponseWriter,
@@ -78,4 +79,9 @@ func NotPermittedResponse(w http.ResponseWriter, r *http.Request) {
 func InactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
 	message := "your user account must be activated to access this resource"
 	Error(w, http.StatusForbidden, message)
+}
+
+func RateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
+	message := "rate limit exceeded"
+	Error(w, http.StatusTooManyRequests, message)
 }

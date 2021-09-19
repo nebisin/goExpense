@@ -25,6 +25,6 @@ migratedown1:
 	migrate -path ./migrations -database ${DB_URI} -verbose down 1
 
 serve:
-	go run ./cmd/api -port=${PORT} -db-uri=${DB_URI}
+	go run ./cmd/api -port=${PORT} -db-uri=${DB_URI} -cors-trusted-origins="http://localhost:4001"
 
 .PHONY: postgres createdb migrateup migratedown migrateup1 migratedown1 dropdb test serve

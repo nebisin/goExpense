@@ -9,7 +9,7 @@ import (
 func (s *server) serve() error {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.config.port),
-		Handler:      s.router,
+		Handler:      s.recoverPanic(s.enableCORS(s.router)),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  time.Minute,
