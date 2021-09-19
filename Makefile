@@ -7,7 +7,7 @@ createdb:
 	docker exec -it expense-postgres createdb --username=${POSTGRES_USER} --owner=${POSTGRES_USER} development
 
 dropdb:
-	docker exec -it expense-postgres dropdb development
+	docker exec -it expense-postgres dropdb --username=${POSTGRES_USER} development
 
 test:
 	go test -v -cover ./...

@@ -17,6 +17,7 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
 		Title       string    `json:"title" validate:"required,min=3,max=180"`
 		Description string    `json:"description,omitempty" validate:"max=1000"`
+		Tags        []string  `json:"tags,omitempty" validate:"unique"`
 		Amount      float64   `json:"amount" validate:"required"`
 		Payday      time.Time `json:"payday" validate:"required"`
 	}
@@ -38,6 +39,7 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		Type:        input.Type,
 		Title:       input.Title,
 		Description: input.Description,
+		Tags:        input.Tags,
 		Amount:      input.Amount,
 		Payday:      input.Payday,
 	}
@@ -138,6 +140,7 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 		Type        *string    `json:"type,omitempty" validate:"omitempty,oneof='expense' 'income'"`
 		Title       *string    `json:"title,omitempty" validate:"omitempty,min=3,max=180"`
 		Description *string    `json:"description,omitempty" validate:"omitempty,max=1000"`
+		Tags        []string   `json:"tags,omitempty" validate:"unique"`
 		Amount      *float64   `json:"amount,omitempty"`
 		Payday      *time.Time `json:"payday,omitempty"`
 	}
@@ -162,6 +165,10 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 
 	if input.Description != nil {
 		ts.Description = *input.Description
+	}
+
+	if input.Tags != nil {
+		ts.Tags = input.Tags
 	}
 
 	if input.Amount != nil {
@@ -189,6 +196,7 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Title     string
+		Tags      []string
 		Before    time.Time
 		StartedAt time.Time
 		store.Filters
@@ -197,6 +205,7 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 	qs := r.URL.Query()
 
 	input.Title = request.ReadString(qs, "title", "")
+	input.Tags = request.ReadCSV(qs, "tags", []string{})
 
 	input.Filters.Page = request.ReadInt(qs, "page", 1)
 	input.Filters.Limit = request.ReadInt(qs, "limit", 20)
@@ -213,7 +222,7 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 
 	user := s.contextGetUser(r)
 
-	transactions, err := s.models.Transactions.GetAll(user.ID, input.Title, input.StartedAt, input.Before, input.Filters)
+	transactions, err := s.models.Transactions.GetAll(user.ID, input.Title, input.Tags, input.StartedAt, input.Before, input.Filters)
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
