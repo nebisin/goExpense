@@ -14,7 +14,6 @@ func (s *server) setupRoutes() {
 
 	s.router = mux.NewRouter()
 
-	s.router.Use(s.enableCORS)
 	s.router.Use(s.authenticate)
 
 	s.router.NotFoundHandler = http.HandlerFunc(response.NotFoundResponse)

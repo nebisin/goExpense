@@ -109,7 +109,7 @@ func (s *server) enableCORS(next http.Handler) http.Handler {
 		}
 
 		if r.Method == http.MethodOptions {
-			response.MethodNotAllowedResponse(w, r)
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 
