@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type Transaction struct {
@@ -14,12 +16,12 @@ type Transaction struct {
 	Type        string    `json:"type"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
 	Amount      float64   `json:"amount"`
 	Payday      time.Time `json:"payday"`
 	CreatedAt   time.Time `json:"created_at"`
 	Version     int       `json:"version"`
 	//AccountID   int64     `json:"account_id,omitempty"`
-	//Tags        []string  `json:"tags,omitempty"`
 	//Receipts    []string  `json:"receipts,omitempty"`
 }
 
@@ -28,8 +30,8 @@ type transactionModel struct {
 }
 
 func (m *transactionModel) Insert(ts *Transaction) error {
-	query := `INSERT INTO transactions (user_id, type, title, description, amount, payday)
-VALUES ($1, $2, $3, $4, $5, $6)
+	query := `INSERT INTO transactions (user_id, type, title, description, tags, amount, payday)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, created_at, version`
 
 	args := []interface{}{
@@ -37,6 +39,7 @@ RETURNING id, created_at, version`
 		ts.Type,
 		ts.Title,
 		ts.Description,
+		pq.Array(ts.Tags),
 		ts.Amount,
 		ts.Payday,
 	}
@@ -52,7 +55,7 @@ func (m *transactionModel) Get(id int64) (*Transaction, error) {
 		return nil, ErrRecordNotFound
 	}
 
-	query := `SELECT id, user_id, type, title, description, amount, payday, created_at, version
+	query := `SELECT id, user_id, type, title, description, tags, amount, payday, created_at, version
 FROM transactions
 WHERE id = $1`
 
@@ -67,6 +70,7 @@ WHERE id = $1`
 		&ts.Type,
 		&ts.Title,
 		&ts.Description,
+		pq.Array(&ts.Tags),
 		&ts.Amount,
 		&ts.Payday,
 		&ts.CreatedAt,
@@ -80,14 +84,15 @@ WHERE id = $1`
 }
 
 func (m *transactionModel) Update(ts *Transaction) error {
-	query := `UPDATE transactions SET type=$1, title=$2, description=$3, amount=$4, payday=$5, version=version+1
-WHERE id=$6 AND version=$7
+	query := `UPDATE transactions SET type=$1, title=$2, description=$3, tags=$4, amount=$5, payday=$6, version=version+1
+WHERE id=$7 AND version=$8
 RETURNING version`
 
 	args := []interface{}{
 		ts.Type,
 		ts.Title,
 		ts.Description,
+		pq.Array(ts.Tags),
 		ts.Amount,
 		ts.Payday,
 		ts.ID,
@@ -129,17 +134,19 @@ WHERE id = $1 AND user_id = $2`
 	return nil
 }
 
-func (m *transactionModel) GetAll(user_id int64, title string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
-	query := fmt.Sprintf(`SELECT id, user_id, type, title, description, amount, payday, created_at, version
+func (m *transactionModel) GetAll(user_id int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
+	query := fmt.Sprintf(`SELECT id, user_id, type, title, description, tags, amount, payday, created_at, version
 	FROM transactions
-	WHERE user_id = $1 AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='') AND payday >= $3 AND payday < $4
+	WHERE user_id = $1 AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
+	AND (tags @> $7 OR $2 = '{}')
+	AND payday >= $3 AND payday < $4
 	ORDER BY %s %s, id ASC
 	LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, user_id, title, startedAt, before, filters.Limit, filters.offset())
+	rows, err := m.DB.QueryContext(ctx, query, user_id, title, startedAt, before, filters.Limit, filters.offset(), pq.Array(tags))
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +163,7 @@ func (m *transactionModel) GetAll(user_id int64, title string, startedAt time.Ti
 			&ts.Type,
 			&ts.Title,
 			&ts.Description,
+			pq.Array(&ts.Tags),
 			&ts.Amount,
 			&ts.Payday,
 			&ts.CreatedAt,
