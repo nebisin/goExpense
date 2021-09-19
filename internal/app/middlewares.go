@@ -2,12 +2,15 @@ package app
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/auth"
 	"github.com/nebisin/goExpense/pkg/response"
+	"golang.org/x/time/rate"
 )
 
 func (s *server) authenticate(next http.Handler) http.Handler {
@@ -112,6 +115,34 @@ func (s *server) enableCORS(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *server) rateLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+
+		s.limiter.mu.Lock()
+
+		if _, found := s.limiter.clients[ip]; !found {
+			s.limiter.clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
+		}
+
+		s.limiter.clients[ip].lastSeen = time.Now()
+
+		if !s.limiter.clients[ip].limiter.Allow() {
+			s.limiter.mu.Unlock()
+			response.RateLimitExceededResponse(w, r)
+			return
+		}
+
+		s.limiter.mu.Unlock()
 
 		next.ServeHTTP(w, r)
 	})

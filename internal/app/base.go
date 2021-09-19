@@ -6,12 +6,14 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/nebisin/goExpense/internal/mailer"
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 )
 
 const version = "1.0.0"
@@ -34,13 +36,22 @@ type config struct {
 }
 
 type server struct {
-	router *mux.Router
-	logger *logrus.Logger
-	config config
-	db     *sql.DB
-	models *store.Models
-	wg     sync.WaitGroup
-	mailer mailer.Mailer
+	router  *mux.Router
+	logger  *logrus.Logger
+	config  config
+	db      *sql.DB
+	models  *store.Models
+	wg      sync.WaitGroup
+	mailer  mailer.Mailer
+	limiter struct {
+		mu      sync.Mutex
+		clients map[string]*client
+	}
+}
+
+type client struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
 }
 
 func NewServer() *server {
@@ -68,6 +79,8 @@ func (s *server) Run() {
 	s.models = store.NewModels(db)
 
 	s.setupRoutes()
+
+	s.setupLimiter()
 
 	if err := s.serve(); err != nil {
 		s.logger.WithError(err).Fatal("an error occurred while starting the server")
@@ -103,4 +116,24 @@ func (s *server) getConfig() error {
 	s.config = cfg
 
 	return nil
+}
+
+func (s *server) setupLimiter() {
+	s.limiter.clients = make(map[string]*client)
+
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+
+			s.limiter.mu.Lock()
+
+			for ip, client := range s.limiter.clients {
+				if time.Since(client.lastSeen) > 3*time.Minute {
+					delete(s.limiter.clients, ip)
+				}
+			}
+
+			s.limiter.mu.Unlock()
+		}
+	}()
 }
