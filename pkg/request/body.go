@@ -13,8 +13,13 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	maxBytes := 1_038_576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
 	// decode the request body
-	err := json.NewDecoder(r.Body).Decode(dst)
+	err = json.Unmarshal(body, dst)
 	// if there is an error during decoding:
 	if err != nil {
 		// There is a syntax problem with the JSON
