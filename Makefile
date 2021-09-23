@@ -9,9 +9,6 @@ createdb:
 dropdb:
 	docker exec -it expense-postgres dropdb --username=${POSTGRES_USER} development
 
-test:
-	go test -v -cover ./...
-
 migrateup:
 	migrate -path ./migrations -database ${DB_URI} -verbose up
 
@@ -24,7 +21,19 @@ migratedown:
 migratedown1:
 	migrate -path ./migrations -database ${DB_URI} -verbose down 1
 
+testcreatedb:
+	docker exec -it expense-postgres createdb --username=${POSTGRES_USER} --owner=${POSTGRES_USER} test
+
+testdropdb:
+	docker exec -it expense-postgres dropdb --username=${POSTGRES_USER} test
+
+testmigrateup:
+	migrate -path ./migrations -database ${TEST_DB_URI} -verbose up
+
+test:
+	go test -v -cover ./...
+
 serve:
 	go run ./cmd/api -port=${PORT} -db-uri=${DB_URI} -cors-trusted-origins="http://localhost:4001"
 
-.PHONY: postgres createdb migrateup migratedown migrateup1 migratedown1 dropdb test serve
+.PHONY: postgres createdb migrateup migratedown migrateup1 migratedown1 dropdb testcreatedb testdropdb testmigrateup test serve
