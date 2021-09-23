@@ -49,27 +49,45 @@ func TestInsertUser(t *testing.T) {
 func TestGetUser(t *testing.T) {
 	user1 := createRandomUser(t)
 
-	user2, err := testModels.Users.Get(user1.ID)
-	require.NoError(t, err)
-	require.NotEmpty(t, user2)
+	t.Run("success case for get user", func(t *testing.T) {
+		user2, err := testModels.Users.Get(user1.ID)
+		require.NoError(t, err)
+		require.NotEmpty(t, user2)
 
-	require.Equal(t, user1.Name, user2.Name)
-	require.Equal(t, user1.Email, user2.Email)
-	require.Equal(t, user1.Password.Hashed, user2.Password.Hashed)
-	require.Equal(t, user1.IsActivated, user2.IsActivated)
-	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+		require.Equal(t, user1.Name, user2.Name)
+		require.Equal(t, user1.Email, user2.Email)
+		require.Equal(t, user1.Password.Hashed, user2.Password.Hashed)
+		require.Equal(t, user1.IsActivated, user2.IsActivated)
+		require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+	})
+
+	t.Run("not found case for get user", func(t *testing.T) {
+		user2, err := testModels.Users.Get(user1.ID + 1)
+		require.Error(t, err)
+		require.ErrorIs(t, err, store.ErrRecordNotFound)
+		require.Empty(t, user2)
+	})
 }
 
 func TestGetUserByEmail(t *testing.T) {
 	user1 := createRandomUser(t)
 
-	user2, err := testModels.Users.GetByEmail(user1.Email)
-	require.NoError(t, err)
-	require.NotEmpty(t, user2)
+	t.Run("success case for get user by email", func(t *testing.T) {
+		user2, err := testModels.Users.GetByEmail(user1.Email)
+		require.NoError(t, err)
+		require.NotEmpty(t, user2)
 
-	require.Equal(t, user1.Name, user2.Name)
-	require.Equal(t, user1.Email, user2.Email)
-	require.Equal(t, user1.Password.Hashed, user2.Password.Hashed)
-	require.Equal(t, user1.IsActivated, user2.IsActivated)
-	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+		require.Equal(t, user1.Name, user2.Name)
+		require.Equal(t, user1.Email, user2.Email)
+		require.Equal(t, user1.Password.Hashed, user2.Password.Hashed)
+		require.Equal(t, user1.IsActivated, user2.IsActivated)
+		require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+	})
+
+	t.Run("not found case for get user by email", func(t *testing.T) {
+		user2, err := testModels.Users.GetByEmail(random.Email())
+		require.Error(t, err)
+		require.ErrorIs(t, err, store.ErrRecordNotFound)
+		require.Empty(t, user2)
+	})
 }
