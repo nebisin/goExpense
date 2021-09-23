@@ -14,7 +14,7 @@ var testModels *store.Models
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("../../.env"); err != nil {
 		log.Fatal(err)
 	}
 
