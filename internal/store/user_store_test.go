@@ -42,11 +42,21 @@ func createRandomUser(t *testing.T) store.User {
 	return user
 }
 
-func TestInsertUser(t *testing.T) {
-	createRandomUser(t)
+func TestUserModel_Insert(t *testing.T) {
+	var user store.User
+
+	t.Run("success case for insert user", func(t *testing.T) {
+		user = createRandomUser(t)
+	})
+
+	t.Run("duplicate email case for insert user", func(t *testing.T) {
+		err := testModels.Users.Insert(&user)
+		require.Error(t, err)
+		require.ErrorIs(t, err, store.ErrDuplicateEmail)
+	})
 }
 
-func TestGetUser(t *testing.T) {
+func TestUserModel_Get(t *testing.T) {
 	user1 := createRandomUser(t)
 
 	t.Run("success case for get user", func(t *testing.T) {
@@ -69,7 +79,7 @@ func TestGetUser(t *testing.T) {
 	})
 }
 
-func TestGetUserByEmail(t *testing.T) {
+func TestUserModel_GetByEmail(t *testing.T) {
 	user1 := createRandomUser(t)
 
 	t.Run("success case for get user by email", func(t *testing.T) {
@@ -92,7 +102,7 @@ func TestGetUserByEmail(t *testing.T) {
 	})
 }
 
-func TestUpdateUser(t *testing.T) {
+func TestUserModel_Update(t *testing.T) {
 	user1 := createRandomUser(t)
 
 	t.Run("success case for update user", func(t *testing.T) {
