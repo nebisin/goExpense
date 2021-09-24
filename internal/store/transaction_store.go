@@ -100,7 +100,7 @@ RETURNING version`
 
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&ts.Version)
 	if errors.Is(err, sql.ErrNoRows) {
-		return ErrRecordNotFound
+		return ErrEditConflict
 	}
 
 	return err

@@ -40,3 +40,16 @@ func Email() string {
 func Password() string {
 	return fmt.Sprintf("%s%d", String(6), Int(1000, 9999))
 }
+
+func Date() time.Time {
+	return time.Date(
+		int(Int(2000, 2020)),
+		time.Month(int(Int(1, 12))),
+		int(Int(1, 28)),
+		0,
+		0,
+		0,
+		0,
+		time.UTC,
+	)
+}
