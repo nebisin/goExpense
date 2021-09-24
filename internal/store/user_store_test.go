@@ -145,3 +145,13 @@ func TestUserModel_Update(t *testing.T) {
 	})
 
 }
+
+func TestUserModel_GetForToken(t *testing.T) {
+	token := createNewToken(t)
+
+	user, err := testModels.Users.GetForToken(token.Scope, token.Plaintext)
+	require.NoError(t, err)
+	require.NotEmpty(t, user)
+
+	require.Equal(t, user.ID, token.UserID)
+}
