@@ -28,7 +28,7 @@ testdropdb:
 	docker exec -it expense-postgres dropdb --username=${POSTGRES_USER} test
 
 testmigrateup:
-	migrate -path ./migrations -database ${TEST_DB_URI} -verbose up
+	migrate -path ./migrations -database ${DB_URI} -verbose up
 
 test:
 	go test -v -cover ./...
