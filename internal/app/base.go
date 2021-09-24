@@ -53,7 +53,7 @@ func (s *server) Run() {
 	s.mailer = mailer.New(s.config.SMTP.Host, s.config.SMTP.Port, s.config.SMTP.Username, s.config.SMTP.Password, s.config.SMTP.Sender)
 
 	s.logger.Info("we are connecting the database")
-	db, err := store.OpenDB(s.config.DBURI)
+	db, err := store.OpenDB(s.config.DbURI)
 	if err != nil {
 		s.logger.WithError(err).Fatal("something went wrong while connecting the database")
 	}

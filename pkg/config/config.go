@@ -7,7 +7,7 @@ import (
 type Config struct {
 	Port      int    `mapstructure:"PORT"`
 	Env       string `mapstructure:"ENV"`
-	DBURI     string `mapstructure:"DB_URI"`
+	DbURI     string `mapstructure:"DB_URI"`
 	JwtSecret string `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	SMTP      struct {
 		Host     string `mapstructure:"SMTP_HOST"`

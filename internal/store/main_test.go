@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
-	db, err := store.OpenDB(cfg.DBURI)
+	db, err := store.OpenDB(cfg.DbURI)
 	if err != nil {
 		log.Fatal(err)
 	}
