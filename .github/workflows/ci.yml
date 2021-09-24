@@ -44,9 +44,9 @@ jobs:
       - name: Run migrations
         run: make testmigrateup
         env:
-          TEST_DB_URI: postgresql://postgres:mysecretpassword@postgres:5432/test?sslmode=disable
+          DB_URI: postgresql://postgres:mysecretpassword@postgres:5432/test?sslmode=disable
 
       - name: Test
         run: make test
         env:
-          TEST_DB_URI: postgresql://postgres:mysecretpassword@postgres:5432/test?sslmode=disable
+          DB_URI: postgresql://postgres:mysecretpassword@postgres:5432/test?sslmode=disable
