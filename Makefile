@@ -1,4 +1,4 @@
-include .env
+include test.env
 
 postgres:
 	docker run --name expense-postgres -p5432:5432 -e POSTGRES_USER=${POSTGRES_USER} -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -d postgres:alpine

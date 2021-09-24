@@ -12,7 +12,7 @@ import (
 var testModels *store.Models
 
 func TestMain(m *testing.M) {
-	if err := godotenv.Load("../../.env"); err != nil {
+	if err := godotenv.Load("../../test.env"); err != nil {
 		log.Fatal(err)
 	}
 
