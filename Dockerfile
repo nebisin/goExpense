@@ -18,7 +18,7 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/migrate.linux-amd64 ./migrate
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY ./migrations ./migrations
-COPY .env .
+COPY app.env .
 COPY wait-for.sh .
 COPY start.sh .
 

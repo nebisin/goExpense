@@ -13,7 +13,7 @@ import (
 
 func (s *server) serve() error {
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", s.config.port),
+		Addr:         fmt.Sprintf(":%d", s.config.Port),
 		Handler:      s.recoverPanic(s.enableCORS(s.router)),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -37,7 +37,7 @@ func (s *server) serve() error {
 		shutdownError <- srv.Shutdown(ctx)
 	}()
 
-	s.logger.WithField("port", s.config.port).Info("starting the server")
+	s.logger.WithField("port", s.config.Port).Info("starting the server")
 
 	err := srv.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
@@ -49,7 +49,7 @@ func (s *server) serve() error {
 		return err
 	}
 
-	s.logger.WithField("port", s.config.port).Info("stopped server")
+	s.logger.WithField("port", s.config.Port).Info("stopped server")
 
 	return nil
 }

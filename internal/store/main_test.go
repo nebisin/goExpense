@@ -1,22 +1,23 @@
 package store_test
 
 import (
+	"github.com/nebisin/goExpense/pkg/config"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
 	"github.com/nebisin/goExpense/internal/store"
 )
 
 var testModels *store.Models
 
 func TestMain(m *testing.M) {
-	if err := godotenv.Load("../../test.env"); err != nil {
+	cfg, err := config.LoadConfig("../..", "test")
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	db, err := store.OpenDB(os.Getenv("TEST_DB_URI"))
+	db, err := store.OpenDB(cfg.DBURI)
 	if err != nil {
 		log.Fatal(err)
 	}

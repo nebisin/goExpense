@@ -11,7 +11,7 @@
 .gitconfig
 
 ## ENVIRONMENT FILE ##
-.env
+app.env
 
 # GoLand
 .idea/

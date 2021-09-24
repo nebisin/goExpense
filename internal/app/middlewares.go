@@ -33,7 +33,7 @@ func (s *server) authenticate(next http.Handler) http.Handler {
 
 		token := headerParts[1]
 
-		maker, err := auth.NewJWTMaker(s.config.jwtSecret)
+		maker, err := auth.NewJWTMaker(s.config.JwtSecret)
 		if err != nil {
 			response.ServerErrorResponse(w, r, s.logger, err)
 			return
@@ -96,9 +96,9 @@ func (s *server) enableCORS(next http.Handler) http.Handler {
 
 		origin := r.Header.Get("Origin")
 
-		if origin != "" && len(s.config.cors.trustedOrigins) != 0 {
-			for i := range s.config.cors.trustedOrigins {
-				if origin == s.config.cors.trustedOrigins[i] {
+		if origin != "" && len(s.config.CORS.TrustedOrigins) != 0 {
+			for i := range s.config.CORS.TrustedOrigins {
+				if origin == s.config.CORS.TrustedOrigins[i] {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 
 					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {

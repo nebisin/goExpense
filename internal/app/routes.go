@@ -51,7 +51,7 @@ func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 
 	err := response.JSON(w, http.StatusOK, response.Envelope{
 		"status":      "available",
-		"environment": s.config.env,
+		"environment": s.config.Env,
 		"version":     version,
 	})
 

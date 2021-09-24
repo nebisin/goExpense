@@ -114,7 +114,7 @@ func (s *server) handleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maker, err := auth.NewJWTMaker(s.config.jwtSecret)
+	maker, err := auth.NewJWTMaker(s.config.JwtSecret)
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return

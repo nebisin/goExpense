@@ -34,6 +34,6 @@ test:
 	go test -v -cover ./...
 
 serve:
-	go run ./cmd/api -port=${PORT} -db-uri=${DB_URI} -cors-trusted-origins="http://localhost:4001"
+	go run ./cmd/api
 
 .PHONY: postgres createdb migrateup migratedown migrateup1 migratedown1 dropdb testcreatedb testdropdb testmigrateup test serve
