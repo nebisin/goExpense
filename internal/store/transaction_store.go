@@ -51,10 +51,6 @@ RETURNING id, created_at, version`
 }
 
 func (m *transactionModel) Get(id int64) (*Transaction, error) {
-	if id < 1 {
-		return nil, ErrRecordNotFound
-	}
-
 	query := `SELECT id, user_id, type, title, description, tags, amount, payday, created_at, version
 FROM transactions
 WHERE id = $1`
@@ -104,7 +100,7 @@ RETURNING version`
 
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&ts.Version)
 	if errors.Is(err, sql.ErrNoRows) {
-		return ErrRecordNotFound
+		return ErrEditConflict
 	}
 
 	return err
@@ -134,7 +130,7 @@ WHERE id = $1 AND user_id = $2`
 	return nil
 }
 
-func (m *transactionModel) GetAll(user_id int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
+func (m *transactionModel) GetAll(userId int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
 	query := fmt.Sprintf(`SELECT id, user_id, type, title, description, tags, amount, payday, created_at, version
 	FROM transactions
 	WHERE user_id = $1 AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
@@ -146,7 +142,7 @@ func (m *transactionModel) GetAll(user_id int64, title string, tags []string, st
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, user_id, title, startedAt, before, filters.Limit, filters.offset(), pq.Array(tags))
+	rows, err := m.DB.QueryContext(ctx, query, userId, title, startedAt, before, filters.Limit, filters.offset(), pq.Array(tags))
 	if err != nil {
 		return nil, err
 	}
