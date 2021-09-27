@@ -18,39 +18,19 @@ func TestFilters(t *testing.T) {
 		{
 			column:    "id",
 			direction: "DESC",
-			offset:    6,
+			offset:    12,
 			filters: Filters{
-				Page:  2,
+				Page:  3,
 				Limit: 6,
 				Sort:  "-id",
 			},
 		},
 		{
-			column:    "id",
+			column:    "title",
 			direction: "ASC",
 			offset:    0,
 			filters: Filters{
 				Page:  1,
-				Limit: 10,
-				Sort:  "id",
-			},
-		},
-		{
-			column:    "title",
-			direction: "DESC",
-			offset:    48,
-			filters: Filters{
-				Page:  5,
-				Limit: 12,
-				Sort:  "-title",
-			},
-		},
-		{
-			column:    "title",
-			direction: "ASC",
-			offset:    90,
-			filters: Filters{
-				Page:  10,
 				Limit: 10,
 				Sort:  "title",
 			},
