@@ -12,7 +12,8 @@ import (
 
 func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title string `json:"title" validate:"required,min=3,max=500"`
+		Title       string `json:"title" validate:"required,min=3,max=500"`
+		Description string `json:"description,omitempty" validate:"max=1000"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
@@ -28,8 +29,9 @@ func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	user := s.contextGetUser(r)
 
 	account := store.Account{
-		OwnerID: user.ID,
-		Title:   input.Title,
+		OwnerID:     user.ID,
+		Title:       input.Title,
+		Description: input.Description,
 	}
 
 	err := s.models.Accounts.Insert(&account)
@@ -100,6 +102,8 @@ func (s *server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
+
+// TODO: Implement update account handler
 
 func (s *server) handleListAccounts(w http.ResponseWriter, r *http.Request) {
 	var input struct {

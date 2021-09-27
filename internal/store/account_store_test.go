@@ -89,6 +89,38 @@ func TestAccountModel_Delete(t *testing.T) {
 	})
 }
 
+func TestAccountModel_Update(t *testing.T) {
+
+	t.Run("success case for update account method", func(t *testing.T) {
+		account1 := createRandomAccount(t)
+		newDesc := random.Name()
+		account2 := account1
+		account2.Description = newDesc
+
+		err := testModels.Accounts.Update(&account2)
+		require.NoError(t, err)
+		require.NotEmpty(t, account2)
+
+		require.Equal(t, account2.ID, account1.ID)
+		require.Equal(t, account2.OwnerID, account1.OwnerID)
+		require.Equal(t, account2.Title, account1.Title)
+		require.Equal(t, account2.Description, newDesc)
+		require.Equal(t, account2.Version, account1.Version+1)
+
+		require.WithinDuration(t, account2.CreatedAt, account1.CreatedAt, time.Second)
+	})
+
+	t.Run("edit conflict case for update account", func(t *testing.T) {
+		account1 := createRandomAccount(t)
+		account1.Version = int(random.Int(9, 99))
+
+		err := testModels.Accounts.Update(&account1)
+		require.Error(t, err)
+		require.ErrorIs(t, err, store.ErrEditConflict)
+	})
+
+}
+
 func TestAccountModel_GetAll(t *testing.T) {
 	account := createRandomAccount(t)
 

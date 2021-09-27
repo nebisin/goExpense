@@ -9,11 +9,12 @@ import (
 )
 
 type Account struct {
-	ID        int64     `json:"id"`
-	OwnerID   int64     `json:"owner_id"`
-	Title     string    `json:"title"`
-	CreatedAt time.Time `json:"created_at"`
-	Version   int       `json:"version"`
+	ID          int64     `json:"id"`
+	OwnerID     int64     `json:"owner_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	Version     int       `json:"version"`
 }
 
 type accountModel struct {
@@ -21,13 +22,14 @@ type accountModel struct {
 }
 
 func (m *accountModel) Insert(account *Account) error {
-	query := `INSERT INTO accounts (owner_id, title) 
-VALUES ($1, $2) 
+	query := `INSERT INTO accounts (owner_id, title, description) 
+VALUES ($1, $2, $3) 
 RETURNING id, created_at, version`
 
 	args := []interface{}{
 		account.OwnerID,
 		account.Title,
+		account.Description,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -37,7 +39,7 @@ RETURNING id, created_at, version`
 }
 
 func (m *accountModel) Get(id int64) (*Account, error) {
-	query := `SELECT id, owner_id, title, created_at, version
+	query := `SELECT id, owner_id, title, description, created_at, version
 FROM accounts
 WHERE id=$1`
 
@@ -46,7 +48,7 @@ WHERE id=$1`
 
 	var account Account
 
-	err := m.DB.QueryRowContext(ctx, query, id).Scan(&account.ID, &account.OwnerID, &account.Title, &account.CreatedAt, &account.Version)
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(&account.ID, &account.OwnerID, &account.Title, &account.Description, &account.CreatedAt, &account.Version)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecordNotFound
 	}
@@ -78,8 +80,31 @@ WHERE id=$1 AND owner_id=$2`
 	return nil
 }
 
+func (m *accountModel) Update(account *Account) error {
+	query := `UPDATE accounts SET title=$1, description=$2, version=version+1
+WHERE id=$3 AND version=$4
+RETURNING version`
+
+	args := []interface{} {
+		account.Title,
+		account.Description,
+		account.ID,
+		account.Version,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&account.Version)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrEditConflict
+	}
+
+	return err
+}
+
 func (m *accountModel) GetAll(ownerID int64, filters Filters) ([]*Account, error) {
-	query := fmt.Sprintf(`SELECT id, owner_id, title, created_at, version
+	query := fmt.Sprintf(`SELECT id, owner_id, title, description, created_at, version
 FROM accounts
 WHERE owner_id=$1
 ORDER BY %s %s, id ASC
@@ -99,7 +124,7 @@ LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
 	for rows.Next() {
 		var account Account
 
-		err := rows.Scan(&account.ID, &account.OwnerID, &account.Title, &account.CreatedAt, &account.Version)
+		err := rows.Scan(&account.ID, &account.OwnerID, &account.Title, &account.Description, &account.CreatedAt, &account.Version)
 		if err != nil {
 			return nil, err
 		}

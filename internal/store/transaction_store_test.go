@@ -103,7 +103,7 @@ func TestTransactionModel_Update(t *testing.T) {
 		require.WithinDuration(t, ts1.Payday, ts2.Payday, time.Second)
 	})
 
-	t.Run("edit conflict case for get transaction", func(t *testing.T) {
+	t.Run("edit conflict case for update transaction", func(t *testing.T) {
 		ts2 := ts1
 		ts2.Title = random.String(12)
 
