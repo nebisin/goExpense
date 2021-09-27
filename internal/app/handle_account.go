@@ -11,8 +11,8 @@ import (
 )
 
 func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
-	var input struct{
-		Name string `json:"name" validate:"required,min=3,max=500"`
+	var input struct {
+		Title string `json:"title" validate:"required,min=3,max=500"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
@@ -28,8 +28,8 @@ func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	user := s.contextGetUser(r)
 
 	account := store.Account{
-		UserID:    user.ID,
-		Name:      input.Name,
+		OwnerID: user.ID,
+		Title:   input.Title,
 	}
 
 	err := s.models.Accounts.Insert(&account)
@@ -64,7 +64,7 @@ func (s *server) handleGetAccount(w http.ResponseWriter, r *http.Request) {
 
 	user := s.contextGetUser(r)
 
-	if account.UserID != user.ID {
+	if account.OwnerID != user.ID {
 		response.NotFoundResponse(w, r)
 		return
 	}
@@ -102,7 +102,7 @@ func (s *server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleListAccounts(w http.ResponseWriter, r *http.Request) {
-	var input struct{
+	var input struct {
 		Filters store.Filters
 	}
 

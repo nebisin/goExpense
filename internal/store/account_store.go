@@ -10,8 +10,8 @@ import (
 
 type Account struct {
 	ID        int64     `json:"id"`
-	UserID    int64     `json:"user_id"`
-	Name      string    `json:"name"`
+	OwnerID   int64     `json:"owner_id"`
+	Title     string    `json:"title"`
 	CreatedAt time.Time `json:"created_at"`
 	Version   int       `json:"version"`
 }
@@ -21,13 +21,13 @@ type accountModel struct {
 }
 
 func (m *accountModel) Insert(account *Account) error {
-	query := `INSERT INTO accounts (user_id, name) 
+	query := `INSERT INTO accounts (owner_id, title) 
 VALUES ($1, $2) 
 RETURNING id, created_at, version`
 
 	args := []interface{}{
-		account.UserID,
-		account.Name,
+		account.OwnerID,
+		account.Title,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -37,7 +37,7 @@ RETURNING id, created_at, version`
 }
 
 func (m *accountModel) Get(id int64) (*Account, error) {
-	query := `SELECT id, user_id, name, created_at, version
+	query := `SELECT id, owner_id, title, created_at, version
 FROM accounts
 WHERE id=$1`
 
@@ -46,7 +46,7 @@ WHERE id=$1`
 
 	var account Account
 
-	err := m.DB.QueryRowContext(ctx, query, id).Scan(&account.ID, &account.UserID, &account.Name, &account.CreatedAt, &account.Version)
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(&account.ID, &account.OwnerID, &account.Title, &account.CreatedAt, &account.Version)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecordNotFound
 	}
@@ -54,14 +54,14 @@ WHERE id=$1`
 	return &account, err
 }
 
-func (m *accountModel) Delete(id int64, userID int64) error {
+func (m *accountModel) Delete(id int64, ownerID int64) error {
 	query := `DELETE FROM accounts
-WHERE id=$1 AND user_id=$2`
+WHERE id=$1 AND owner_id=$2`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := m.DB.ExecContext(ctx, query, id, userID)
+	result, err := m.DB.ExecContext(ctx, query, id, ownerID)
 	if err != nil {
 		return err
 	}
@@ -78,17 +78,17 @@ WHERE id=$1 AND user_id=$2`
 	return nil
 }
 
-func (m *accountModel) GetAll(userID int64, filters Filters) ([]*Account, error) {
-	query := fmt.Sprintf(`SELECT id, user_id, name, created_at, version
+func (m *accountModel) GetAll(ownerID int64, filters Filters) ([]*Account, error) {
+	query := fmt.Sprintf(`SELECT id, owner_id, title, created_at, version
 FROM accounts
-WHERE user_id=$1
+WHERE owner_id=$1
 ORDER BY %s %s, id ASC
 LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, userID, filters.Limit, filters.offset())
+	rows, err := m.DB.QueryContext(ctx, query, ownerID, filters.Limit, filters.offset())
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
 	for rows.Next() {
 		var account Account
 
-		err := rows.Scan(&account.ID, &account.UserID, &account.Name, &account.CreatedAt, &account.Version)
+		err := rows.Scan(&account.ID, &account.OwnerID, &account.Title, &account.CreatedAt, &account.Version)
 		if err != nil {
 			return nil, err
 		}
