@@ -95,7 +95,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 	accounts, err := testModels.Accounts.GetAll(account.UserID, store.Filters{
 		Page:  1,
 		Limit: 20,
-		Sort:  "id",
+		Sort:  "-id",
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, accounts)
