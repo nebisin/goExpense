@@ -88,3 +88,23 @@ func TestAccountModel_Delete(t *testing.T) {
 		require.NotEmpty(t, account2)
 	})
 }
+
+func TestAccountModel_GetAll(t *testing.T) {
+	account := createRandomAccount(t)
+
+	accounts, err := testModels.Accounts.GetAll(account.UserID, store.Filters{
+		Page:  1,
+		Limit: 20,
+		Sort:  "id",
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, accounts)
+
+	require.Equal(t, len(accounts), 1)
+	require.Equal(t, accounts[0].ID, account.ID)
+	require.Equal(t, accounts[0].UserID, account.UserID)
+	require.Equal(t, accounts[0].Name, account.Name)
+	require.Equal(t, accounts[0].Version, account.Version)
+
+	require.WithinDuration(t, accounts[0].CreatedAt, account.CreatedAt, time.Second)
+}

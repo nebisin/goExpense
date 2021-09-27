@@ -144,3 +144,27 @@ func TestTransactionModel_Delete(t *testing.T) {
 		require.NotEmpty(t, ts2)
 	})
 }
+
+func TestTransactionModel_GetAll(t *testing.T) {
+	ts1 := createRandomTransaction(t)
+
+	transactions, err := testModels.Transactions.GetAll(
+		ts1.UserID,
+		"",
+		[]string{},
+		time.Unix(0, 0),
+		time.Now().AddDate(3, 0, 0),
+		store.Filters{
+			Page:  1,
+			Limit: 20,
+			Sort:  "id",
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, transactions)
+
+	require.Equal(t, len(transactions), 1)
+	require.Equal(t, transactions[0].ID, ts1.ID)
+	require.Equal(t, transactions[0].UserID, ts1.UserID)
+}

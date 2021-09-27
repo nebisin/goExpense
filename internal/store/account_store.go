@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -75,4 +76,40 @@ WHERE id=$1 AND user_id=$2`
 	}
 
 	return nil
+}
+
+func (m *accountModel) GetAll(userID int64, filters Filters) ([]*Account, error) {
+	query := fmt.Sprintf(`SELECT id, user_id, name, created_at, version
+FROM accounts
+WHERE user_id=$1
+ORDER BY %s %s, id ASC
+LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, userID, filters.Limit, filters.offset())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	accounts := []*Account{}
+
+	for rows.Next() {
+		var account Account
+
+		err := rows.Scan(&account.ID, &account.UserID, &account.Name, &account.CreatedAt, &account.Version)
+		if err != nil {
+			return nil, err
+		}
+
+		accounts = append(accounts, &account)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
 }

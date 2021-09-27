@@ -1,6 +1,7 @@
 package request
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 func ReadString(qs url.Values, key string, defaultValue string) string {
 	s := qs.Get(key)
 
+	fmt.Println(s)
 	if s == "" {
 		return defaultValue
 	}
