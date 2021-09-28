@@ -320,3 +320,12 @@ func (s *server) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (s *server) handleGetMe(w http.ResponseWriter, r *http.Request) {
+	user := s.contextGetUser(r)
+
+	err := response.JSON(w, http.StatusOK, response.Envelope{"user": user})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}

@@ -25,9 +25,10 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/healthcheck", s.handleHealthCheck)
 
 	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
+	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/users/me", s.requireAuthenticatedUser(s.handleGetMe)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/users/activate", s.handleActivateUser).Methods(http.MethodPut)
 	apiV1.HandleFunc("/users/authenticate", s.handleLoginUser).Methods(http.MethodPost)
-	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/users/password", s.handlePasswordReset).Methods(http.MethodPut)
 
 	apiV1.HandleFunc("/tokens/password-reset", s.handleCreatePasswordResetToken).Methods(http.MethodPost)
