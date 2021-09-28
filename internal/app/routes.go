@@ -42,6 +42,7 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/accounts", s.requireAuthenticatedUser(s.handleCreateAccount)).Methods(http.MethodPost)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetAccount)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteAccount)).Methods(http.MethodDelete)
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateAccount)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/accounts", s.requireAuthenticatedUser(s.handleListAccounts)).Methods(http.MethodGet)
 }
 
