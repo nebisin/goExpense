@@ -103,7 +103,7 @@ func TestTransactionModel_Update(t *testing.T) {
 		require.WithinDuration(t, ts1.Payday, ts2.Payday, time.Second)
 	})
 
-	t.Run("edit conflict case for get transaction", func(t *testing.T) {
+	t.Run("edit conflict case for update transaction", func(t *testing.T) {
 		ts2 := ts1
 		ts2.Title = random.String(12)
 
@@ -143,4 +143,28 @@ func TestTransactionModel_Delete(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, ts2)
 	})
+}
+
+func TestTransactionModel_GetAll(t *testing.T) {
+	ts1 := createRandomTransaction(t)
+
+	transactions, err := testModels.Transactions.GetAll(
+		ts1.UserID,
+		"",
+		[]string{},
+		time.Unix(0, 0),
+		time.Now().AddDate(3, 0, 0),
+		store.Filters{
+			Page:  1,
+			Limit: 20,
+			Sort:  "id",
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, transactions)
+
+	require.Equal(t, len(transactions), 1)
+	require.Equal(t, transactions[0].ID, ts1.ID)
+	require.Equal(t, transactions[0].UserID, ts1.UserID)
 }
