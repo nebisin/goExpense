@@ -13,6 +13,7 @@ import (
 type Transaction struct {
 	ID          int64     `json:"id"`
 	UserID      int64     `json:"user_id"`
+	AccountID   int64     `json:"account_id"`
 	Type        string    `json:"type"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
@@ -30,12 +31,13 @@ type transactionModel struct {
 }
 
 func (m *transactionModel) Insert(ts *Transaction) error {
-	query := `INSERT INTO transactions (user_id, type, title, description, tags, amount, payday)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+	query := `INSERT INTO transactions (user_id, account_id, type, title, description, tags, amount, payday)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id, created_at, version`
 
 	args := []interface{}{
 		ts.UserID,
+		ts.AccountID,
 		ts.Type,
 		ts.Title,
 		ts.Description,
@@ -51,7 +53,7 @@ RETURNING id, created_at, version`
 }
 
 func (m *transactionModel) Get(id int64) (*Transaction, error) {
-	query := `SELECT id, user_id, type, title, description, tags, amount, payday, created_at, version
+	query := `SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
 FROM transactions
 WHERE id = $1`
 
@@ -63,6 +65,7 @@ WHERE id = $1`
 	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&ts.ID,
 		&ts.UserID,
+		&ts.AccountID,
 		&ts.Type,
 		&ts.Title,
 		&ts.Description,
@@ -131,7 +134,8 @@ WHERE id = $1 AND user_id = $2`
 }
 
 func (m *transactionModel) GetAll(userId int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
-	query := fmt.Sprintf(`SELECT id, user_id, type, title, description, tags, amount, payday, created_at, version
+	//TODO: Filter transactions by account_id
+	query := fmt.Sprintf(`SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
 	FROM transactions
 	WHERE user_id = $1 AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
 	AND (tags @> $7 OR $2 = '{}')
@@ -156,6 +160,7 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 		err := rows.Scan(
 			&ts.ID,
 			&ts.UserID,
+			&ts.AccountID,
 			&ts.Type,
 			&ts.Title,
 			&ts.Description,

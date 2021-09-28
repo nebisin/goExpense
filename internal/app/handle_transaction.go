@@ -14,6 +14,7 @@ import (
 
 func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	var input struct {
+		AccountID   int64     `json:"account_id" validate:"required"`
 		Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
 		Title       string    `json:"title" validate:"required,min=3,max=180"`
 		Description string    `json:"description,omitempty" validate:"max=1000"`
@@ -34,8 +35,11 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 
 	user := s.contextGetUser(r)
 
+	// TODO: Check whether or not account belong to the user
+
 	ts := &store.Transaction{
 		UserID:      user.ID,
+		AccountID:   input.AccountID,
 		Type:        input.Type,
 		Title:       input.Title,
 		Description: input.Description,
