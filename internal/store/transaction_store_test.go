@@ -10,6 +10,7 @@ import (
 
 func createRandomTransaction(t *testing.T) store.Transaction {
 	user := createRandomUser(t)
+	account := createRandomAccount(t)
 
 	randTitle := random.String(12)
 	randDesc := random.String(150)
@@ -26,6 +27,7 @@ func createRandomTransaction(t *testing.T) store.Transaction {
 
 	ts := store.Transaction{
 		UserID:      user.ID,
+		AccountID:   account.ID,
 		Type:        randType,
 		Title:       randTitle,
 		Description: randDesc,
@@ -43,6 +45,7 @@ func createRandomTransaction(t *testing.T) store.Transaction {
 	require.Equal(t, ts.Tags, randTags)
 	require.Equal(t, ts.Amount, randAmount)
 	require.Equal(t, ts.UserID, user.ID)
+	require.Equal(t, ts.AccountID, account.ID)
 
 	require.WithinDuration(t, ts.Payday, randPayday, time.Second)
 
