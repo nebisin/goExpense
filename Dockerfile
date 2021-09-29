@@ -24,4 +24,4 @@ COPY start.sh .
 
 EXPOSE 4000
 CMD [ "/app/main" ]
-ENTRYPOINT [ "/app/start.sh" ]
+ENTRYPOINT [ "sh", "/app/start.sh" ]

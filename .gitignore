@@ -16,3 +16,7 @@ app.env
 # GoLand
 .idea/
 /.idea/
+
+# Exclude "build-time" ignore files.
+.dockerignore
+.gcloudignore
