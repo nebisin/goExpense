@@ -10,13 +10,13 @@
 ## GITCONFIG ##
 .gitconfig
 
+## Exclude "build-time" ignore files. ##
+.dockerignore
+.gcloudignore
+
 ## ENVIRONMENT FILE ##
 app.env
 
-# GoLand
+## GoLand ##
 .idea/
 /.idea/
-
-# Exclude "build-time" ignore files.
-.dockerignore
-.gcloudignore
