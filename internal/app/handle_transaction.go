@@ -14,7 +14,7 @@ import (
 
 func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		AccountID   int64     `json:"account_id" validate:"required"`
+		AccountID   int64     `json:"accountID" validate:"required"`
 		Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
 		Title       string    `json:"title" validate:"required,min=3,max=180"`
 		Description string    `json:"description,omitempty" validate:"max=1000"`
@@ -231,7 +231,7 @@ func (s *server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 	input.Filters.Sort = request.ReadString(qs, "sort", "id")
 
 	input.Before = request.ReadTime(qs, "before", time.Now().AddDate(3, 0, 0))
-	input.StartedAt = request.ReadTime(qs, "started_at", time.Unix(0, 0))
+	input.StartedAt = request.ReadTime(qs, "startedAt", time.Unix(0, 0))
 
 	if errs := request.Validate(input); errs != nil {
 		response.FailedValidationResponse(w, r, errs)

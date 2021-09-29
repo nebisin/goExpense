@@ -2,19 +2,28 @@ package request
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/go-playground/validator/v10"
+	"reflect"
+	"strings"
 )
 
 func Validate(input interface{}) map[string]string {
 	validate := validator.New()
 
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
 	if err := validate.Struct(input); err != nil {
 		errs := err.(validator.ValidationErrors)
 		errorMap := make(map[string]string)
 		for _, fieldError := range errs {
-			key := strings.ToLower(fieldError.Field())
+
+			key := fieldError.Field()
 			switch {
 			case fieldError.Tag() == "required":
 				errorMap[key] = "must be provided"

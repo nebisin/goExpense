@@ -12,17 +12,16 @@ import (
 
 type Transaction struct {
 	ID          int64     `json:"id"`
-	UserID      int64     `json:"user_id"`
-	AccountID   int64     `json:"account_id"`
+	UserID      int64     `json:"userID"`
+	AccountID   int64     `json:"accountID"`
 	Type        string    `json:"type"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
 	Tags        []string  `json:"tags,omitempty"`
 	Amount      float64   `json:"amount"`
 	Payday      time.Time `json:"payday"`
-	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt   time.Time `json:"createdAt"`
 	Version     int       `json:"version"`
-	//AccountID   int64     `json:"account_id,omitempty"`
 	//Receipts    []string  `json:"receipts,omitempty"`
 }
 

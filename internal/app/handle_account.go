@@ -239,7 +239,7 @@ func (s *server) handleListTransactionsByAccount(w http.ResponseWriter, r *http.
 	input.Filters.Sort = request.ReadString(qs, "sort", "id")
 
 	input.Before = request.ReadTime(qs, "before", time.Now().AddDate(3, 0, 0))
-	input.StartedAt = request.ReadTime(qs, "started_at", time.Unix(0, 0))
+	input.StartedAt = request.ReadTime(qs, "startedAt", time.Unix(0, 0))
 
 	if errs := request.Validate(input); errs != nil {
 		response.FailedValidationResponse(w, r, errs)

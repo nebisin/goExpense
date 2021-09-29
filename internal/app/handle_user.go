@@ -126,7 +126,7 @@ func (s *server) handleLoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = response.JSON(w, http.StatusOK, response.Envelope{"authentication_token": token})
+	err = response.JSON(w, http.StatusOK, response.Envelope{"authenticationToken": token})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
@@ -137,7 +137,7 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		Name        *string `json:"name,omitempty" validate:"omitempty,min=3,max=500"`
 		Email       *string `json:"email,omitempty" validate:"omitempty,email"`
 		Password    *string `json:"password,omitempty" validate:"omitempty,max=72,min=8"`
-		OldPassword *string `json:"old_password,omitempty" validate:"required_with=Password"`
+		OldPassword *string `json:"oldPassword,omitempty" validate:"required_with=Password"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
