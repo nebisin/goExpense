@@ -10,10 +10,10 @@ import (
 
 type Account struct {
 	ID          int64     `json:"id"`
-	OwnerID     int64     `json:"owner_id"`
+	OwnerID     int64     `json:"ownerID"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt   time.Time `json:"createdAt"`
 	Version     int       `json:"version"`
 }
 
