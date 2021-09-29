@@ -35,7 +35,21 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 
 	user := s.contextGetUser(r)
 
-	// TODO: Check whether or not account belong to the user
+	account, err := s.models.Accounts.Get(input.AccountID)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	// TODO: Update this while implementing the shared accounts
+	if user.ID != account.OwnerID {
+		response.NotPermittedResponse(w, r)
+		return
+	}
 
 	ts := &store.Transaction{
 		UserID:      user.ID,
@@ -53,7 +67,7 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err := response.JSON(w, http.StatusCreated, response.Envelope{"transaction": ts})
+	err = response.JSON(w, http.StatusCreated, response.Envelope{"transaction": ts})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return

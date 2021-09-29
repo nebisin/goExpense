@@ -45,6 +45,8 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteAccount)).Methods(http.MethodDelete)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateAccount)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/accounts", s.requireAuthenticatedUser(s.handleListAccounts)).Methods(http.MethodGet)
+
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}/transactions", s.requireAuthenticatedUser(s.handleListTransactionsByAccount)).Methods(http.MethodGet)
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {

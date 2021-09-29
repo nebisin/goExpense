@@ -134,19 +134,86 @@ WHERE id = $1 AND user_id = $2`
 }
 
 func (m *transactionModel) GetAll(userId int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
-	//TODO: Filter transactions by account_id
 	query := fmt.Sprintf(`SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
 	FROM transactions
-	WHERE user_id = $1 AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
-	AND (tags @> $7 OR $2 = '{}')
+	WHERE user_id = $1 
+	AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
+	AND (tags @> $7 OR $7 = '{}')
 	AND payday >= $3 AND payday < $4
 	ORDER BY %s %s, id ASC
 	LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
 
+	args := []interface{}{
+		userId,
+		title,
+		startedAt,
+		before,
+		filters.Limit,
+		filters.offset(),
+		pq.Array(tags),
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, userId, title, startedAt, before, filters.Limit, filters.offset(), pq.Array(tags))
+	rows, err := m.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	transactions := []*Transaction{}
+
+	for rows.Next() {
+		var ts Transaction
+
+		err := rows.Scan(
+			&ts.ID,
+			&ts.UserID,
+			&ts.AccountID,
+			&ts.Type,
+			&ts.Title,
+			&ts.Description,
+			pq.Array(&ts.Tags),
+			&ts.Amount,
+			&ts.Payday,
+			&ts.CreatedAt,
+			&ts.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, &ts)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
+}
+
+func (m *transactionModel) GetAllByAccountID(accountID int64, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
+	query := fmt.Sprintf(`SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
+FROM transactions
+WHERE account_id=$1
+AND payday >= $2 AND payday < $3
+ORDER BY %s %s, id ASC 
+LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
+
+	args := []interface{}{
+		accountID,
+		startedAt,
+		before,
+		filters.Limit,
+		filters.offset(),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

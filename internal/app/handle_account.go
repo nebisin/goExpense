@@ -8,6 +8,7 @@ import (
 	"github.com/nebisin/goExpense/pkg/response"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
@@ -194,6 +195,64 @@ func (s *server) handleListAccounts(w http.ResponseWriter, r *http.Request) {
 
 	err = response.JSON(w, http.StatusOK, response.Envelope{"accounts": accounts})
 	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handleListTransactionsByAccount(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	account, err := s.models.Accounts.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	user := s.contextGetUser(r)
+
+	// TODO: Update this while implementing the shared accounts
+	if user.ID != account.OwnerID {
+		response.NotPermittedResponse(w, r)
+		return
+	}
+
+	var input struct {
+		Before    time.Time
+		StartedAt time.Time
+		store.Filters
+	}
+
+	qs := r.URL.Query()
+
+	input.Filters.Page = request.ReadInt(qs, "page", 1)
+	input.Filters.Limit = request.ReadInt(qs, "limit", 20)
+
+	input.Filters.Sort = request.ReadString(qs, "sort", "id")
+
+	input.Before = request.ReadTime(qs, "before", time.Now().AddDate(3, 0, 0))
+	input.StartedAt = request.ReadTime(qs, "started_at", time.Unix(0, 0))
+
+	if errs := request.Validate(input); errs != nil {
+		response.FailedValidationResponse(w, r, errs)
+		return
+	}
+
+	transactions, err := s.models.Transactions.GetAllByAccountID(account.ID, input.StartedAt, input.Before, input.Filters)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := response.JSON(w, http.StatusOK, response.Envelope{"transactions": transactions}); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }

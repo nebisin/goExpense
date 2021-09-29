@@ -171,3 +171,25 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	require.Equal(t, transactions[0].ID, ts1.ID)
 	require.Equal(t, transactions[0].UserID, ts1.UserID)
 }
+
+func TestTransactionModel_GetAllByAccountID(t *testing.T) {
+	ts1 := createRandomTransaction(t)
+
+	transactions, err := testModels.Transactions.GetAllByAccountID(
+		ts1.AccountID,
+		time.Unix(0, 0),
+		time.Now().AddDate(3, 0, 0),
+		store.Filters{
+			Page:  1,
+			Limit: 20,
+			Sort:  "id",
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, transactions)
+
+	require.Equal(t, len(transactions), 1)
+	require.Equal(t, transactions[0].ID, ts1.ID)
+	require.Equal(t, transactions[0].UserID, ts1.UserID)
+}
