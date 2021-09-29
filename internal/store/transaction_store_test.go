@@ -10,6 +10,7 @@ import (
 
 func createRandomTransaction(t *testing.T) store.Transaction {
 	user := createRandomUser(t)
+	account := createRandomAccount(t)
 
 	randTitle := random.String(12)
 	randDesc := random.String(150)
@@ -26,6 +27,7 @@ func createRandomTransaction(t *testing.T) store.Transaction {
 
 	ts := store.Transaction{
 		UserID:      user.ID,
+		AccountID:   account.ID,
 		Type:        randType,
 		Title:       randTitle,
 		Description: randDesc,
@@ -43,6 +45,7 @@ func createRandomTransaction(t *testing.T) store.Transaction {
 	require.Equal(t, ts.Tags, randTags)
 	require.Equal(t, ts.Amount, randAmount)
 	require.Equal(t, ts.UserID, user.ID)
+	require.Equal(t, ts.AccountID, account.ID)
 
 	require.WithinDuration(t, ts.Payday, randPayday, time.Second)
 
@@ -152,6 +155,28 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		ts1.UserID,
 		"",
 		[]string{},
+		time.Unix(0, 0),
+		time.Now().AddDate(3, 0, 0),
+		store.Filters{
+			Page:  1,
+			Limit: 20,
+			Sort:  "id",
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, transactions)
+
+	require.Equal(t, len(transactions), 1)
+	require.Equal(t, transactions[0].ID, ts1.ID)
+	require.Equal(t, transactions[0].UserID, ts1.UserID)
+}
+
+func TestTransactionModel_GetAllByAccountID(t *testing.T) {
+	ts1 := createRandomTransaction(t)
+
+	transactions, err := testModels.Transactions.GetAllByAccountID(
+		ts1.AccountID,
 		time.Unix(0, 0),
 		time.Now().AddDate(3, 0, 0),
 		store.Filters{

@@ -14,6 +14,7 @@ import (
 
 func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	var input struct {
+		AccountID   int64     `json:"account_id" validate:"required"`
 		Type        string    `json:"type" validate:"required,oneof='expense' 'income'"`
 		Title       string    `json:"title" validate:"required,min=3,max=180"`
 		Description string    `json:"description,omitempty" validate:"max=1000"`
@@ -34,8 +35,25 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 
 	user := s.contextGetUser(r)
 
+	account, err := s.models.Accounts.Get(input.AccountID)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	// TODO: Update this while implementing the shared accounts
+	if user.ID != account.OwnerID {
+		response.NotPermittedResponse(w, r)
+		return
+	}
+
 	ts := &store.Transaction{
 		UserID:      user.ID,
+		AccountID:   input.AccountID,
 		Type:        input.Type,
 		Title:       input.Title,
 		Description: input.Description,
@@ -49,7 +67,7 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err := response.JSON(w, http.StatusCreated, response.Envelope{"transaction": ts})
+	err = response.JSON(w, http.StatusCreated, response.Envelope{"transaction": ts})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
