@@ -7,7 +7,6 @@ import (
 )
 
 type Stats struct {
-	ID        int64     `json:"id"`
 	AccountID int64     `json:"accountID"`
 	Date      time.Time `json:"date"`
 	Earning   float64   `json:"earning"`
@@ -23,7 +22,7 @@ type statsModel struct {
 func (m *statsModel) Insert(stats *Stats) error {
 	query := `INSERT INTO stats (account_id, date, earning, spending)
 	VALUES ($1, $2, $3, $4)
-	RETURNING id, created_at, version`
+	RETURNING created_at, version`
 
 	args := []interface{}{
 		stats.AccountID,
@@ -35,38 +34,13 @@ func (m *statsModel) Insert(stats *Stats) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	return m.DB.QueryRowContext(ctx, query, args...).Scan(&stats.ID, &stats.CreatedAt, &stats.Version)
-}
-
-func (m *statsModel) Get(id int64) (*Stats, error) {
-	query := `SELECT id, account_id, date, earning, spending, created_at, version
-	FROM stats
-	WHERE id = $1`
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	var stats Stats
-
-	err := m.DB.QueryRowContext(ctx, query, id).Scan(
-		&stats.ID,
-		&stats.AccountID,
-		&stats.Earning,
-		&stats.Spending,
-		&stats.CreatedAt,
-		&stats.Version,
-	)
-	if err == sql.ErrNoRows {
-		return nil, ErrRecordNotFound
-	}
-
-	return &stats, err
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&stats.CreatedAt, &stats.Version)
 }
 
 func (m *statsModel) GetByDate(accountID int64, date time.Time) (*Stats, error) {
-	query := `SELECT id, account_id, date, earning, spending, created_at, version
+	query := `SELECT account_id, date, earning, spending, created_at, version
 	FROM stats
-	WHERE account_id = $1 AND data = $2`
+	WHERE account_id = $1 AND date = $2`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -74,7 +48,6 @@ func (m *statsModel) GetByDate(accountID int64, date time.Time) (*Stats, error) 
 	var stats Stats
 
 	err := m.DB.QueryRowContext(ctx, query, accountID, date).Scan(
-		&stats.ID,
 		&stats.AccountID,
 		&stats.Earning,
 		&stats.Spending,
@@ -90,13 +63,14 @@ func (m *statsModel) GetByDate(accountID int64, date time.Time) (*Stats, error) 
 
 func (m *statsModel) Update(stats *Stats) error {
 	query := `UPDATE stats SET earning=$1, spending=$2, version=version+1
-	WHERE id=$3 AND version=$4
+	WHERE account_id=$3 AND date=$4 AND version=$5
 	RETURNING version`
 
 	args := []interface{}{
 		stats.Earning,
 		stats.Spending,
-		stats.ID,
+		stats.AccountID,
+		stats.Date,
 		stats.Version,
 	}
 
@@ -111,14 +85,14 @@ func (m *statsModel) Update(stats *Stats) error {
 	return err
 }
 
-func (m *statsModel) Delete(id int64, accountID int64) error {
+func (m *statsModel) Delete(accountID int64, date time.Time) error {
 	query := `DELETE FROM stats
-	WHERE id=$1 AND account_id=$2`
+	WHERE account_id=$1 AND date=$2`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := m.DB.ExecContext(ctx, query, id, accountID)
+	result, err := m.DB.ExecContext(ctx, query, accountID, date)
 	if err != nil {
 		return err
 	}
@@ -136,10 +110,10 @@ func (m *statsModel) Delete(id int64, accountID int64) error {
 }
 
 func (m *statsModel) GetAll(accountID int64, after time.Time, before time.Time) ([]*Stats, error) {
-	query := `SELECT id, account_id, date, earning, spending, created_at, version
+	query := `SELECT account_id, date, earning, spending, created_at, version
 	FROM stats
 	WHERE account_id=$1 AND date >= $2 AND date < $3
-	ORDER BY id ASC`
+	ORDER BY date ASC`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -156,7 +130,6 @@ func (m *statsModel) GetAll(accountID int64, after time.Time, before time.Time) 
 		var stats Stats
 
 		err := rows.Scan(
-			&stats.ID,
 			&stats.AccountID,
 			&stats.Date,
 			&stats.Earning,
