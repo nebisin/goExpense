@@ -34,9 +34,9 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/tokens/password-reset", s.handleCreatePasswordResetToken).Methods(http.MethodPost)
 	apiV1.HandleFunc("/tokens/activation", s.handleNewActivationToken).Methods(http.MethodPost)
 
-	apiV1.HandleFunc("/transactions", s.requireActivatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
-	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireActivatedUser(s.handleDeleteTransaction)).Methods(http.MethodDelete)
-	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireActivatedUser(s.handleUpdateTransaction)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleCreateTransaction)).Methods(http.MethodPost)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteTransaction)).Methods(http.MethodDelete)
+	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateTransaction)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/transactions/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetTransaction)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/transactions", s.requireAuthenticatedUser(s.handleListTransactions)).Methods(http.MethodGet)
 
