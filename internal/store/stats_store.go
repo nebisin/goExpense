@@ -63,6 +63,31 @@ func (m *statsModel) Get(id int64) (*Stats, error) {
 	return &stats, err
 }
 
+func (m *statsModel) GetByDate(accountID int64, date time.Time) (*Stats, error) {
+	query := `SELECT id, account_id, date, earning, spending, created_at, version
+	FROM stats
+	WHERE account_id = $1 AND data = $2`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var stats Stats
+
+	err := m.DB.QueryRowContext(ctx, query, accountID, date).Scan(
+		&stats.ID,
+		&stats.AccountID,
+		&stats.Earning,
+		&stats.Spending,
+		&stats.CreatedAt,
+		&stats.Version,
+	)
+	if err == sql.ErrNoRows {
+		return nil, ErrRecordNotFound
+	}
+
+	return &stats, err
+}
+
 func (m *statsModel) Update(stats *Stats) error {
 	query := `UPDATE stats SET earning=$1, spending=$2, version=version+1
 	WHERE id=$3 AND version=$4
@@ -108,4 +133,46 @@ func (m *statsModel) Delete(id int64, accountID int64) error {
 	}
 
 	return nil
+}
+
+func (m *statsModel) GetAll(accountID int64, after time.Time, before time.Time) ([]*Stats, error) {
+	query := `SELECT id, account_id, date, earning, spending, created_at, version
+	FROM stats
+	WHERE account_id=$1 AND date >= $2 AND date < $3
+	ORDER BY id ASC`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, accountID, after, before)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	statsList := []*Stats{}
+
+	for rows.Next() {
+		var stats Stats
+
+		err := rows.Scan(
+			&stats.ID,
+			&stats.AccountID,
+			&stats.Date,
+			&stats.Earning,
+			&stats.Spending,
+			&stats.CreatedAt,
+			&stats.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+		statsList = append(statsList, &stats)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return statsList, nil
 }
