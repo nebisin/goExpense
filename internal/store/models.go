@@ -16,6 +16,7 @@ type Models struct {
 	Transactions transactionModel
 	Tokens       tokenModel
 	Accounts     accountModel
+	Stats        statsModel
 }
 
 func NewModels(db *sql.DB) *Models {
@@ -24,5 +25,6 @@ func NewModels(db *sql.DB) *Models {
 		Transactions: transactionModel{DB: db},
 		Tokens:       tokenModel{DB: db},
 		Accounts:     accountModel{DB: db},
+		Stats:        statsModel{DB: db},
 	}
 }

@@ -137,7 +137,7 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 	FROM transactions
 	WHERE user_id = $1 
 	AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2='')
-	AND (tags @> $7 OR $7 = '{}')
+	OR (tags @> $7 OR $7 = '{}')
 	AND payday >= $3 AND payday < $4
 	ORDER BY %s %s, id ASC
 	LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
