@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Stats struct {
+type Statistic struct {
 	AccountID int64     `json:"accountID"`
 	Date      time.Time `json:"date"`
 	Earning   float64   `json:"earning"`
@@ -15,69 +15,69 @@ type Stats struct {
 	Version   int       `json:"version"`
 }
 
-type statsModel struct {
+type statisticModel struct {
 	DB *sql.DB
 }
 
-func (m *statsModel) Insert(stats *Stats) error {
-	query := `INSERT INTO stats (account_id, date, earning, spending)
+func (m *statisticModel) Insert(stat *Statistic) error {
+	query := `INSERT INTO statistics (account_id, date, earning, spending)
 	VALUES ($1, $2, $3, $4)
 	RETURNING created_at, version`
 
 	args := []interface{}{
-		stats.AccountID,
-		stats.Date,
-		stats.Earning,
-		stats.Spending,
+		stat.AccountID,
+		stat.Date,
+		stat.Earning,
+		stat.Spending,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	return m.DB.QueryRowContext(ctx, query, args...).Scan(&stats.CreatedAt, &stats.Version)
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&stat.CreatedAt, &stat.Version)
 }
 
-func (m *statsModel) GetByDate(accountID int64, date time.Time) (*Stats, error) {
+func (m *statisticModel) GetByDate(accountID int64, date time.Time) (*Statistic, error) {
 	query := `SELECT account_id, date, earning, spending, created_at, version
-	FROM stats
+	FROM statistics
 	WHERE account_id = $1 AND date = $2`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var stats Stats
+	var stat Statistic
 
 	err := m.DB.QueryRowContext(ctx, query, accountID, date).Scan(
-		&stats.AccountID,
-		&stats.Earning,
-		&stats.Spending,
-		&stats.CreatedAt,
-		&stats.Version,
+		&stat.AccountID,
+		&stat.Earning,
+		&stat.Spending,
+		&stat.CreatedAt,
+		&stat.Version,
 	)
 	if err == sql.ErrNoRows {
 		return nil, ErrRecordNotFound
 	}
 
-	return &stats, err
+	return &stat, err
 }
 
-func (m *statsModel) Update(stats *Stats) error {
-	query := `UPDATE stats SET earning=$1, spending=$2, version=version+1
+func (m *statisticModel) Update(stat *Statistic) error {
+	query := `UPDATE statistics SET earning=$1, spending=$2, version=version+1
 	WHERE account_id=$3 AND date=$4 AND version=$5
 	RETURNING version`
 
 	args := []interface{}{
-		stats.Earning,
-		stats.Spending,
-		stats.AccountID,
-		stats.Date,
-		stats.Version,
+		stat.Earning,
+		stat.Spending,
+		stat.AccountID,
+		stat.Date,
+		stat.Version,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&stats.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&stat.Version)
 	if err == sql.ErrNoRows {
 		return ErrRecordNotFound
 	}
@@ -85,8 +85,8 @@ func (m *statsModel) Update(stats *Stats) error {
 	return err
 }
 
-func (m *statsModel) Delete(accountID int64, date time.Time) error {
-	query := `DELETE FROM stats
+func (m *statisticModel) Delete(accountID int64, date time.Time) error {
+	query := `DELETE FROM statistics
 	WHERE account_id=$1 AND date=$2`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -109,9 +109,9 @@ func (m *statsModel) Delete(accountID int64, date time.Time) error {
 	return nil
 }
 
-func (m *statsModel) GetAll(accountID int64, after time.Time, before time.Time) ([]*Stats, error) {
+func (m *statisticModel) GetAll(accountID int64, after time.Time, before time.Time) ([]*Statistic, error) {
 	query := `SELECT account_id, date, earning, spending, created_at, version
-	FROM stats
+	FROM statistics
 	WHERE account_id=$1 AND date >= $2 AND date < $3
 	ORDER BY date ASC`
 
@@ -124,28 +124,28 @@ func (m *statsModel) GetAll(accountID int64, after time.Time, before time.Time) 
 	}
 	defer rows.Close()
 
-	statsList := []*Stats{}
+	stats := []*Statistic{}
 
 	for rows.Next() {
-		var stats Stats
+		var stat Statistic
 
 		err := rows.Scan(
-			&stats.AccountID,
-			&stats.Date,
-			&stats.Earning,
-			&stats.Spending,
-			&stats.CreatedAt,
-			&stats.Version,
+			&stat.AccountID,
+			&stat.Date,
+			&stat.Earning,
+			&stat.Spending,
+			&stat.CreatedAt,
+			&stat.Version,
 		)
 		if err != nil {
 			return nil, err
 		}
-		statsList = append(statsList, &stats)
+		stats = append(stats, &stat)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return statsList, nil
+	return stats, nil
 }
