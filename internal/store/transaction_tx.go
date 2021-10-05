@@ -21,15 +21,14 @@ func (m *Models) CreateTransactionTX(ts *Transaction, account *Account, statisti
 		return err
 	}
 
-	if err := txModels.Accounts.Update(account); err != nil {
-		return err
-	}
-
-	if statistic == nil {
-		statistic = &Statistic{
-			AccountID: ts.AccountID,
-			Date:      ts.Payday,
+	/*
+		if err := txModels.Accounts.Update(account); err != nil {
+			return err
 		}
+	*/
+	if statistic.Version == 0 {
+		statistic.AccountID = ts.AccountID
+		statistic.Date = ts.Payday
 
 		if ts.Type == "income" {
 			statistic.Earning = ts.Amount
@@ -41,6 +40,12 @@ func (m *Models) CreateTransactionTX(ts *Transaction, account *Account, statisti
 			return err
 		}
 	} else {
+		if ts.Type == "income" {
+			statistic.Earning += ts.Amount
+		} else {
+			statistic.Spending += ts.Amount
+		}
+
 		if err := txModels.Statistics.Update(statistic); err != nil {
 			return err
 		}
