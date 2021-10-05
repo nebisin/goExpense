@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/base32"
 	"time"
 )
@@ -46,7 +45,7 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 }
 
 type tokenModel struct {
-	DB *sql.DB
+	DB DBTX
 }
 
 func (m *tokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {

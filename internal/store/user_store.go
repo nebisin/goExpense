@@ -27,7 +27,7 @@ func (u *User) IsAnonymous() bool {
 }
 
 type userModel struct {
-	DB *sql.DB
+	DB DBTX
 }
 
 func (m *userModel) Insert(user *User) error {

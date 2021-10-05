@@ -16,7 +16,7 @@ type Statistic struct {
 }
 
 type statisticModel struct {
-	DB *sql.DB
+	DB DBTX
 }
 
 func (m *statisticModel) Insert(stat *Statistic) error {
@@ -79,7 +79,7 @@ func (m *statisticModel) Update(stat *Statistic) error {
 
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&stat.Version)
 	if err == sql.ErrNoRows {
-		return ErrRecordNotFound
+		return ErrEditConflict
 	}
 
 	return err

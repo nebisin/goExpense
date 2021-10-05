@@ -26,7 +26,7 @@ type Transaction struct {
 }
 
 type transactionModel struct {
-	DB *sql.DB
+	DB DBTX
 }
 
 func (m *transactionModel) Insert(ts *Transaction) error {
