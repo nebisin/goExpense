@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (m *Models) CreateTransactionTX(ts *Transaction, account *Account, statistic *Statistic) error {
+func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

@@ -1,11 +1,12 @@
 package store_test
 
 import (
+	"testing"
+	"time"
+
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/random"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestModels_CreateTransactionTX(t *testing.T) {
@@ -37,7 +38,7 @@ func TestModels_CreateTransactionTX(t *testing.T) {
 	}
 
 	stat := store.Statistic{}
-	err := testModels.CreateTransactionTX(&ts, &account, &stat)
+	err := testModels.CreateTransactionTX(&ts, &stat)
 	require.NoError(t, err)
 	require.NotEmpty(t, stat)
 

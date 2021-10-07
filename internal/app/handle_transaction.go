@@ -62,7 +62,17 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		Payday:      input.Payday,
 	}
 
-	if err := s.models.Transactions.Insert(ts); err != nil {
+	stat, err := s.models.Statistics.GetByDate(account.ID, ts.Payday)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			stat = &store.Statistic{}
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+	}
+
+	if err := s.models.CreateTransactionTX(ts, stat); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}
