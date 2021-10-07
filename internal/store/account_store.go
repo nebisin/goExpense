@@ -18,7 +18,7 @@ type Account struct {
 }
 
 type accountModel struct {
-	DB *sql.DB
+	DB DBTX
 }
 
 func (m *accountModel) Insert(account *Account) error {
@@ -85,7 +85,7 @@ func (m *accountModel) Update(account *Account) error {
 WHERE id=$3 AND version=$4
 RETURNING version`
 
-	args := []interface{} {
+	args := []interface{}{
 		account.Title,
 		account.Description,
 		account.ID,
