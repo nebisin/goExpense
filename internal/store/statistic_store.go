@@ -49,6 +49,7 @@ func (m *statisticModel) GetByDate(accountID int64, date time.Time) (*Statistic,
 
 	err := m.DB.QueryRowContext(ctx, query, accountID, date).Scan(
 		&stat.AccountID,
+		&stat.Date,
 		&stat.Earning,
 		&stat.Spending,
 		&stat.CreatedAt,

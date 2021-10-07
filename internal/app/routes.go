@@ -47,6 +47,7 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/accounts", s.requireAuthenticatedUser(s.handleListAccounts)).Methods(http.MethodGet)
 
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}/transactions", s.requireAuthenticatedUser(s.handleListTransactionsByAccount)).Methods(http.MethodGet)
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}/statistics", s.requireAuthenticatedUser(s.handleListStatisticsByAccount)).Methods(http.MethodGet)
 }
 
 func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
