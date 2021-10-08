@@ -124,7 +124,28 @@ func (s *server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request)
 
 	user := s.contextGetUser(r)
 
-	if err := s.models.Transactions.Delete(id, user.ID); err != nil {
+	ts, err := s.models.Transactions.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if ts.UserID != user.ID {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	stat, err := s.models.Statistics.GetByDate(ts.AccountID, ts.Payday)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.DeleteTransactionTX(ts, stat); err != nil {
 		if errors.Is(err, store.ErrRecordNotFound) {
 			response.NotFoundResponse(w, r)
 		} else {
@@ -147,7 +168,7 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ts, err := s.models.Transactions.Get(id)
+	oldTS, err := s.models.Transactions.Get(id)
 	if err != nil {
 		if errors.Is(err, store.ErrRecordNotFound) {
 			response.NotFoundResponse(w, r)
@@ -159,7 +180,7 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 
 	user := s.contextGetUser(r)
 
-	if ts.UserID != user.ID {
+	if oldTS.UserID != user.ID {
 		response.NotFoundResponse(w, r)
 		return
 	}
@@ -183,31 +204,39 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	newTS := *oldTS
+
 	if input.Type != nil {
-		ts.Type = *input.Type
+		newTS.Type = *input.Type
 	}
 
 	if input.Title != nil {
-		ts.Title = *input.Title
+		newTS.Title = *input.Title
 	}
 
 	if input.Description != nil {
-		ts.Description = *input.Description
+		newTS.Description = *input.Description
 	}
 
 	if input.Tags != nil {
-		ts.Tags = input.Tags
+		newTS.Tags = input.Tags
 	}
 
 	if input.Amount != nil {
-		ts.Amount = *input.Amount
+		newTS.Amount = *input.Amount
 	}
 
 	if input.Payday != nil {
-		ts.Payday = *input.Payday
+		newTS.Payday = *input.Payday
 	}
 
-	if err := s.models.Transactions.Update(ts); err != nil {
+	stat, err := s.models.Statistics.GetByDate(oldTS.AccountID, oldTS.Payday)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.UpdateTransactionTX(&newTS, *oldTS, stat); err != nil {
 		if errors.Is(err, store.ErrEditConflict) {
 			response.EditConflictResponse(w, r)
 		} else {
@@ -216,7 +245,7 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := response.JSON(w, http.StatusOK, response.Envelope{"transaction": ts}); err != nil {
+	if err := response.JSON(w, http.StatusOK, response.Envelope{"transaction": newTS}); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
