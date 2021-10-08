@@ -138,3 +138,32 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 
 	return tx.Commit()
 }
+
+func (m *Models) DeleteTransactionTX(ts *Transaction, stat *Statistic) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	tx, err := m.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	txModels := NewModelsWithTX(tx)
+
+	if err := txModels.Transactions.Delete(ts.ID, ts.UserID); err != nil {
+		return err
+	}
+
+	if ts.Type == "income" {
+		stat.Earning -= ts.Amount
+	} else {
+		stat.Spending -= ts.Amount
+	}
+
+	if err := txModels.Statistics.Update(stat); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}

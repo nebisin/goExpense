@@ -178,3 +178,25 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 	})
 
 }
+
+func TestModels_DeleteTransactionTX(t *testing.T) {
+	ts, stat := createRandomTX(t)
+
+	var expectedEarning float64
+	var expectedSpending float64
+
+	if ts.Type == "income" {
+		expectedEarning = stat.Earning - ts.Amount
+		expectedSpending = stat.Spending
+	} else {
+		expectedEarning = stat.Earning
+		expectedSpending = stat.Spending - ts.Amount
+	}
+
+	err := testModels.DeleteTransactionTX(ts, stat)
+	require.NoError(t, err)
+	require.NotEmpty(t, stat)
+
+	require.Equal(t, stat.Earning, expectedEarning)
+	require.Equal(t, stat.Spending, expectedSpending)
+}
