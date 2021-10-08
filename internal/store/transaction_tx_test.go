@@ -150,4 +150,31 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 		require.Equal(t, stat.Spending, expectedSpending)
 	})
 
+	t.Run("update transaction date", func(t *testing.T) {
+		oldTS, stat := createRandomTX(t)
+
+		newTS := *oldTS
+
+		newTS.Payday = random.Date()
+
+		var expectedEarning float64
+		var expectedSpending float64
+		if newTS.Type == "income" {
+			expectedEarning = stat.Earning - newTS.Amount
+			expectedSpending = stat.Spending
+		} else {
+			expectedEarning = stat.Earning
+			expectedSpending = stat.Spending - newTS.Amount
+		}
+
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, newTS)
+		require.NotEmpty(t, stat)
+
+		require.Equal(t, stat.Earning, expectedEarning)
+		require.Equal(t, stat.Spending, expectedSpending)
+	})
+
 }

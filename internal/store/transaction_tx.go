@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -93,7 +94,43 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 		}
 	}
 
-	// TODO: Cover payday changing
+	if oldTS.Payday != newTS.Payday {
+		newStat, err := txModels.Statistics.GetByDate(newTS.AccountID, newTS.Payday)
+		if err != nil {
+			if errors.Is(err, ErrRecordNotFound) {
+				newStat := &Statistic{}
+
+				newStat.AccountID = newTS.AccountID
+				newStat.Date = newTS.Payday
+
+				if newTS.Type == "income" {
+					statistic.Earning -= newTS.Amount
+					newStat.Earning += newTS.Amount
+				} else {
+					statistic.Spending -= newTS.Amount
+					newStat.Spending += newTS.Amount
+				}
+
+				if err := txModels.Statistics.Insert(newStat); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		} else {
+			if newTS.Type == "income" {
+				statistic.Earning -= newTS.Amount
+				newStat.Earning += newTS.Amount
+			} else {
+				statistic.Spending -= newTS.Amount
+				newStat.Spending += newTS.Amount
+			}
+
+			if err := txModels.Statistics.Update(newStat); err != nil {
+				return err
+			}
+		}
+	}
 
 	if err := txModels.Statistics.Update(statistic); err != nil {
 		return err
