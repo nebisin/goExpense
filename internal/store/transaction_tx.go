@@ -21,6 +21,7 @@ func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) erro
 		return err
 	}
 
+	// TODO: Update account balance
 	/*
 		if err := txModels.Accounts.Update(account); err != nil {
 			return err
