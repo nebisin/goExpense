@@ -77,10 +77,10 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 	}
 
 	if newTS.Amount != oldTS.Amount {
-		if newTS.Type == "income" {
-			statistic.Earning += oldTS.Amount - newTS.Amount
+		if oldTS.Type == "income" {
+			statistic.Earning -= oldTS.Amount - newTS.Amount
 		} else {
-			statistic.Spending += oldTS.Amount - newTS.Amount
+			statistic.Spending -= oldTS.Amount - newTS.Amount
 		}
 	}
 

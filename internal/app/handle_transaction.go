@@ -124,7 +124,28 @@ func (s *server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request)
 
 	user := s.contextGetUser(r)
 
-	if err := s.models.Transactions.Delete(id, user.ID); err != nil {
+	ts, err := s.models.Transactions.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	if ts.UserID != user.ID {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	stat, err := s.models.Statistics.GetByDate(ts.AccountID, ts.Payday)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.DeleteTransactionTX(ts, stat); err != nil {
 		if errors.Is(err, store.ErrRecordNotFound) {
 			response.NotFoundResponse(w, r)
 		} else {

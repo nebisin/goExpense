@@ -70,11 +70,11 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 		var expectedEarning float64
 		var expectedSpending float64
 
-		if newTS.Type == "income" {
-			expectedEarning = stat.Earning + (oldTS.Amount - newTS.Amount)
+		if oldTS.Type == "income" {
+			expectedEarning = stat.Earning - (oldTS.Amount - newTS.Amount)
 			expectedSpending = stat.Spending
 		} else {
-			expectedSpending = stat.Spending + (oldTS.Amount - newTS.Amount)
+			expectedSpending = stat.Spending - (oldTS.Amount - newTS.Amount)
 			expectedEarning = stat.Earning
 		}
 
