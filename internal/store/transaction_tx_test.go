@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestModels_CreateTransactionTX(t *testing.T) {
+func createRandomTX(t *testing.T) (*store.Transaction, *store.Statistic) {
 	user := createRandomUser(t)
 	account := createRandomAccount(t)
 
@@ -20,7 +20,7 @@ func TestModels_CreateTransactionTX(t *testing.T) {
 	randPayday := random.Date()
 
 	var randType string
-	if random.Int(1, 2) == 1 {
+	if random.Int(0, 2) == 1 {
 		randType = "income"
 	} else {
 		randType = "expense"
@@ -50,4 +50,104 @@ func TestModels_CreateTransactionTX(t *testing.T) {
 
 	require.Equal(t, ts.AccountID, stat.AccountID)
 	require.WithinDuration(t, ts.Payday, stat.Date, time.Second)
+
+	return &ts, &stat
+}
+
+func TestModels_CreateTransactionTX(t *testing.T) {
+	createRandomTX(t)
+}
+
+func TestModels_UpdateTransactionTX(t *testing.T) {
+
+	t.Run("update transaction amount test", func(t *testing.T) {
+		oldTS, stat := createRandomTX(t)
+
+		newTS := *oldTS
+
+		newTS.Amount = float64(random.Int(1, 300))
+
+		var expectedEarning float64
+		var expectedSpending float64
+
+		if newTS.Type == "income" {
+			expectedEarning = stat.Earning + (oldTS.Amount - newTS.Amount)
+			expectedSpending = stat.Spending
+		} else {
+			expectedSpending = stat.Spending + (oldTS.Amount - newTS.Amount)
+			expectedEarning = stat.Earning
+		}
+
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, newTS)
+		require.NotEmpty(t, stat)
+
+		require.Equal(t, stat.Earning, expectedEarning)
+		require.Equal(t, stat.Spending, expectedSpending)
+	})
+
+	t.Run("update transaction type", func(t *testing.T) {
+		oldTS, stat := createRandomTX(t)
+
+		newTS := *oldTS
+
+		var expectedEarning float64
+		var expectedSpending float64
+
+		if oldTS.Type == "income" {
+			newTS.Type = "expense"
+			expectedEarning = stat.Earning - newTS.Amount
+			expectedSpending = stat.Spending + newTS.Amount
+		} else {
+			newTS.Type = "income"
+			expectedEarning = stat.Earning + newTS.Amount
+			expectedSpending = stat.Spending - newTS.Amount
+		}
+
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, newTS)
+		require.NotEmpty(t, stat)
+
+		require.Equal(t, stat.Earning, expectedEarning)
+		require.Equal(t, stat.Spending, expectedSpending)
+	})
+
+	t.Run("update both type and amount", func(t *testing.T) {
+		oldTS, stat := createRandomTX(t)
+
+		newTS := *oldTS
+
+		var expectedEarning float64
+		var expectedSpending float64
+
+		if oldTS.Type == "income" {
+			expectedEarning = stat.Earning + (oldTS.Amount - newTS.Amount)
+			expectedSpending = stat.Spending
+
+			newTS.Type = "expense"
+			expectedEarning -= newTS.Amount
+			expectedSpending += newTS.Amount
+		} else {
+			expectedSpending = stat.Spending + (oldTS.Amount - newTS.Amount)
+			expectedEarning = stat.Earning
+
+			newTS.Type = "income"
+			expectedEarning += newTS.Amount
+			expectedSpending -= newTS.Amount
+		}
+
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, newTS)
+		require.NotEmpty(t, stat)
+
+		require.Equal(t, stat.Earning, expectedEarning)
+		require.Equal(t, stat.Spending, expectedSpending)
+	})
+
 }
