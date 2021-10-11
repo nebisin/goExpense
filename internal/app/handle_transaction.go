@@ -145,7 +145,13 @@ func (s *server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := s.models.DeleteTransactionTX(ts, stat); err != nil {
+	account, err := s.models.Accounts.Get(ts.AccountID)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.DeleteTransactionTX(ts, account, stat); err != nil {
 		if errors.Is(err, store.ErrRecordNotFound) {
 			response.NotFoundResponse(w, r)
 		} else {
@@ -236,7 +242,13 @@ func (s *server) handleUpdateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := s.models.UpdateTransactionTX(&newTS, *oldTS, stat); err != nil {
+	account, err := s.models.Accounts.Get(oldTS.AccountID)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	if err := s.models.UpdateTransactionTX(&newTS, *oldTS, account, stat); err != nil {
 		if errors.Is(err, store.ErrEditConflict) {
 			response.EditConflictResponse(w, r)
 		} else {

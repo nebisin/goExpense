@@ -63,7 +63,7 @@ func TestModels_CreateTransactionTX(t *testing.T) {
 func TestModels_UpdateTransactionTX(t *testing.T) {
 
 	t.Run("update transaction amount test", func(t *testing.T) {
-		oldTS, _, stat := createRandomTX(t)
+		oldTS, account, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -80,7 +80,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 			expectedEarning = stat.Earning
 		}
 
-		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, account, stat)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, newTS)
@@ -88,10 +88,13 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 
 		require.Equal(t, stat.Earning, expectedEarning)
 		require.Equal(t, stat.Spending, expectedSpending)
+
+		require.Equal(t, account.TotalIncome, expectedEarning)
+		require.Equal(t, account.TotalExpense, expectedSpending)
 	})
 
 	t.Run("update transaction type", func(t *testing.T) {
-		oldTS, _, stat := createRandomTX(t)
+		oldTS, account, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -108,7 +111,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 			expectedSpending = stat.Spending - newTS.Amount
 		}
 
-		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, account, stat)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, newTS)
@@ -116,10 +119,13 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 
 		require.Equal(t, stat.Earning, expectedEarning)
 		require.Equal(t, stat.Spending, expectedSpending)
+
+		require.Equal(t, account.TotalIncome, expectedEarning)
+		require.Equal(t, account.TotalExpense, expectedSpending)
 	})
 
 	t.Run("update both type and amount", func(t *testing.T) {
-		oldTS, _, stat := createRandomTX(t)
+		oldTS, account, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -142,7 +148,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 			expectedSpending -= newTS.Amount
 		}
 
-		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, account, stat)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, newTS)
@@ -150,10 +156,13 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 
 		require.Equal(t, stat.Earning, expectedEarning)
 		require.Equal(t, stat.Spending, expectedSpending)
+
+		require.Equal(t, account.TotalIncome, expectedEarning)
+		require.Equal(t, account.TotalExpense, expectedSpending)
 	})
 
 	t.Run("update transaction date", func(t *testing.T) {
-		oldTS, _, stat := createRandomTX(t)
+		oldTS, account, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -169,7 +178,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 			expectedSpending = stat.Spending - newTS.Amount
 		}
 
-		err := testModels.UpdateTransactionTX(&newTS, *oldTS, stat)
+		err := testModels.UpdateTransactionTX(&newTS, *oldTS, account, stat)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, newTS)
@@ -182,7 +191,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 }
 
 func TestModels_DeleteTransactionTX(t *testing.T) {
-	ts, _, stat := createRandomTX(t)
+	ts, account, stat := createRandomTX(t)
 
 	var expectedEarning float64
 	var expectedSpending float64
@@ -195,10 +204,12 @@ func TestModels_DeleteTransactionTX(t *testing.T) {
 		expectedSpending = stat.Spending - ts.Amount
 	}
 
-	err := testModels.DeleteTransactionTX(ts, stat)
+	err := testModels.DeleteTransactionTX(ts, account, stat)
 	require.NoError(t, err)
 	require.NotEmpty(t, stat)
 
 	require.Equal(t, stat.Earning, expectedEarning)
 	require.Equal(t, stat.Spending, expectedSpending)
+	require.Equal(t, account.TotalExpense, float64(0))
+	require.Equal(t, account.TotalIncome, float64(0))
 }
