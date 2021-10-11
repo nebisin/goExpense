@@ -2,18 +2,22 @@ package app
 
 import (
 	"errors"
+	"math"
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/request"
 	"github.com/nebisin/goExpense/pkg/response"
-	"net/http"
-	"strconv"
 )
 
 func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title       string `json:"title" validate:"required,min=3,max=500"`
-		Description string `json:"description,omitempty" validate:"max=1000"`
+		Title          string  `json:"title" validate:"required,min=3,max=500"`
+		Description    string  `json:"description,omitempty" validate:"max=1000"`
+		Currency       string  `json:"currency" validate:"required"`
+		InitialBalance float64 `json:"initialBalance"`
 	}
 
 	if err := request.ReadJSON(w, r, &input); err != nil {
@@ -32,6 +36,13 @@ func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 		OwnerID:     user.ID,
 		Title:       input.Title,
 		Description: input.Description,
+		Currency:    input.Currency,
+	}
+
+	if input.InitialBalance < 0 {
+		account.TotalExpense = math.Abs(input.InitialBalance)
+	} else {
+		account.TotalIncome = input.InitialBalance
 	}
 
 	err := s.models.Accounts.Insert(&account)

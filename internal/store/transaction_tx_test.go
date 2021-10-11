@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomTX(t *testing.T) (*store.Transaction, *store.Statistic) {
+func createRandomTX(t *testing.T) (*store.Transaction, *store.Account, *store.Statistic) {
 	user := createRandomUser(t)
 	account := createRandomAccount(t)
 
@@ -38,20 +38,22 @@ func createRandomTX(t *testing.T) (*store.Transaction, *store.Statistic) {
 	}
 
 	stat := store.Statistic{}
-	err := testModels.CreateTransactionTX(&ts, &stat)
+	err := testModels.CreateTransactionTX(&ts, &account, &stat)
 	require.NoError(t, err)
 	require.NotEmpty(t, stat)
 
 	if ts.Type == "income" {
 		require.Equal(t, ts.Amount, stat.Earning)
+		require.Equal(t, ts.Amount, account.TotalIncome)
 	} else {
 		require.Equal(t, ts.Amount, stat.Spending)
+		require.Equal(t, ts.Amount, account.TotalExpense)
 	}
 
 	require.Equal(t, ts.AccountID, stat.AccountID)
 	require.WithinDuration(t, ts.Payday, stat.Date, time.Second)
 
-	return &ts, &stat
+	return &ts, &account, &stat
 }
 
 func TestModels_CreateTransactionTX(t *testing.T) {
@@ -61,7 +63,7 @@ func TestModels_CreateTransactionTX(t *testing.T) {
 func TestModels_UpdateTransactionTX(t *testing.T) {
 
 	t.Run("update transaction amount test", func(t *testing.T) {
-		oldTS, stat := createRandomTX(t)
+		oldTS, _, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -89,7 +91,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 	})
 
 	t.Run("update transaction type", func(t *testing.T) {
-		oldTS, stat := createRandomTX(t)
+		oldTS, _, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -117,7 +119,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 	})
 
 	t.Run("update both type and amount", func(t *testing.T) {
-		oldTS, stat := createRandomTX(t)
+		oldTS, _, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -151,7 +153,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 	})
 
 	t.Run("update transaction date", func(t *testing.T) {
-		oldTS, stat := createRandomTX(t)
+		oldTS, _, stat := createRandomTX(t)
 
 		newTS := *oldTS
 
@@ -180,7 +182,7 @@ func TestModels_UpdateTransactionTX(t *testing.T) {
 }
 
 func TestModels_DeleteTransactionTX(t *testing.T) {
-	ts, stat := createRandomTX(t)
+	ts, _, stat := createRandomTX(t)
 
 	var expectedEarning float64
 	var expectedSpending float64

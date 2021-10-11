@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) error {
+func (m *Models) CreateTransactionTX(ts *Transaction, account *Account, statistic *Statistic) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -22,12 +22,16 @@ func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) erro
 		return err
 	}
 
-	// TODO: Update account balance
-	/*
-		if err := txModels.Accounts.Update(account); err != nil {
-			return err
-		}
-	*/
+	if ts.Type == "income" {
+		account.TotalIncome += ts.Amount
+	} else {
+		account.TotalExpense += ts.Amount
+	}
+
+	if err := txModels.Accounts.Update(account); err != nil {
+		return err
+	}
+
 	if statistic.Version == 0 {
 		statistic.AccountID = ts.AccountID
 		statistic.Date = ts.Payday

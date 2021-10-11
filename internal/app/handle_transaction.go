@@ -72,7 +72,7 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if err := s.models.CreateTransactionTX(ts, stat); err != nil {
+	if err := s.models.CreateTransactionTX(ts, account, stat); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}

@@ -1,11 +1,12 @@
 package store_test
 
 import (
+	"testing"
+	"time"
+
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/random"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func createRandomAccount(t *testing.T) store.Account {
@@ -13,8 +14,9 @@ func createRandomAccount(t *testing.T) store.Account {
 	randomName := random.Name()
 
 	account := store.Account{
-		OwnerID: user.ID,
-		Title:   randomName,
+		OwnerID:  user.ID,
+		Title:    randomName,
+		Currency: "USD",
 	}
 
 	err := testModels.Accounts.Insert(&account)
