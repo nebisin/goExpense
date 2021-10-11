@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) error {
+func (m *Models) CreateTransactionTX(ts *Transaction, account *Account, statistic *Statistic) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -22,12 +22,16 @@ func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) erro
 		return err
 	}
 
-	// TODO: Update account balance
-	/*
-		if err := txModels.Accounts.Update(account); err != nil {
-			return err
-		}
-	*/
+	if ts.Type == "income" {
+		account.TotalIncome += ts.Amount
+	} else {
+		account.TotalExpense += ts.Amount
+	}
+
+	if err := txModels.Accounts.Update(account); err != nil {
+		return err
+	}
+
 	if statistic.Version == 0 {
 		statistic.AccountID = ts.AccountID
 		statistic.Date = ts.Payday
@@ -60,7 +64,7 @@ func (m *Models) CreateTransactionTX(ts *Transaction, statistic *Statistic) erro
 	return nil
 }
 
-func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, statistic *Statistic) error {
+func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, account *Account, statistic *Statistic) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -79,8 +83,10 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 	if newTS.Amount != oldTS.Amount {
 		if oldTS.Type == "income" {
 			statistic.Earning -= oldTS.Amount - newTS.Amount
+			account.TotalIncome -= oldTS.Amount - newTS.Amount
 		} else {
 			statistic.Spending -= oldTS.Amount - newTS.Amount
+			account.TotalExpense -= oldTS.Amount - newTS.Amount
 		}
 	}
 
@@ -88,9 +94,13 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 		if newTS.Type == "income" {
 			statistic.Earning += newTS.Amount
 			statistic.Spending -= newTS.Amount
+			account.TotalIncome += newTS.Amount
+			account.TotalExpense -= newTS.Amount
 		} else {
 			statistic.Earning -= newTS.Amount
 			statistic.Spending += newTS.Amount
+			account.TotalIncome -= newTS.Amount
+			account.TotalExpense += newTS.Amount
 		}
 	}
 
@@ -132,6 +142,10 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 		}
 	}
 
+	if err := txModels.Accounts.Update(account); err != nil {
+		return err
+	}
+
 	if err := txModels.Statistics.Update(statistic); err != nil {
 		return err
 	}
@@ -139,7 +153,7 @@ func (m *Models) UpdateTransactionTX(newTS *Transaction, oldTS Transaction, stat
 	return tx.Commit()
 }
 
-func (m *Models) DeleteTransactionTX(ts *Transaction, stat *Statistic) error {
+func (m *Models) DeleteTransactionTX(ts *Transaction, account *Account, stat *Statistic) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -157,11 +171,17 @@ func (m *Models) DeleteTransactionTX(ts *Transaction, stat *Statistic) error {
 
 	if ts.Type == "income" {
 		stat.Earning -= ts.Amount
+		account.TotalIncome -= ts.Amount
 	} else {
 		stat.Spending -= ts.Amount
+		account.TotalExpense -= ts.Amount
 	}
 
 	if err := txModels.Statistics.Update(stat); err != nil {
+		return err
+	}
+
+	if err := txModels.Accounts.Update(account); err != nil {
 		return err
 	}
 
