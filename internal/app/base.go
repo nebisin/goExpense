@@ -25,6 +25,7 @@ type server struct {
 	config  config.Config
 	db      *sql.DB
 	rdb     *redis.Client
+	cache   *cache.Cache
 	models  *store.Models
 	wg      sync.WaitGroup
 	mailer  mailer.Mailer
@@ -71,6 +72,7 @@ func (s *server) Run() {
 		s.logger.WithError(err).Fatal("something went wrong while connecting the redis client")
 	}
 	s.rdb = rdb
+	s.cache = cache.NewCache(rdb)
 
 	s.setupRoutes()
 

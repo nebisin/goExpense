@@ -2,12 +2,11 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -26,6 +25,10 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
 
     steps:
       - uses: actions/checkout@v2
@@ -50,3 +53,5 @@ jobs:
         run: make test
         env:
           DB_URI: postgresql://postgres:mysecretpassword@postgres:5432/test?sslmode=disable
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
