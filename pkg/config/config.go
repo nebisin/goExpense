@@ -16,6 +16,11 @@ type Config struct {
 		Password string `mapstructure:"SMTP_PASSWORD"`
 		Sender   string `mapstructure:"SMTP_SENDER"`
 	}
+	RedisConfig struct {
+		Host     string `mapstructure:"REDIS_HOST"`
+		Port     int    `mapstructure:"REDIS_PORT"`
+		Password string `mapstructure:"REDIS_PASSWORD"`
+	}
 	CORS struct {
 		TrustedOrigins []string `mapstructure:"CORS_TRUSTED_ORIGINS"`
 	}
@@ -36,5 +41,6 @@ func LoadConfig(path string, name string) (cfg Config, err error) {
 	err = viper.Unmarshal(&cfg)
 	err = viper.Unmarshal(&cfg.SMTP)
 	err = viper.Unmarshal(&cfg.CORS)
+	err = viper.Unmarshal(&cfg.RedisConfig)
 	return
 }

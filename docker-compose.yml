@@ -6,6 +6,10 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=mysecretpassword
       - POSTGRES_DB=development
+  redis:
+    image: redis:alpine
+    command: >
+      --requirepass mysecretpassword
   api:
     build:
       context: .
@@ -15,7 +19,10 @@ services:
       - "4000:4000"
     environment:
       - DB_URI=postgres://postgres:mysecretpassword@postgres:5432/development?sslmode=disable
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=mysecretpassword
     depends_on:
       - postgres
+      - redis
     entrypoint: [ "sh", "/app/wait-for.sh", "postgres:5432", "--", "sh", "/app/start.sh", "--" ]
     command: [ "/app/main" ]

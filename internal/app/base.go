@@ -2,12 +2,15 @@ package app
 
 import (
 	"database/sql"
-	"github.com/nebisin/goExpense/pkg/config"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/nebisin/goExpense/pkg/config"
+
 	"github.com/gorilla/mux"
+	"github.com/nebisin/goExpense/internal/cache"
 	"github.com/nebisin/goExpense/internal/mailer"
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/sirupsen/logrus"
@@ -21,6 +24,7 @@ type server struct {
 	logger  *logrus.Logger
 	config  config.Config
 	db      *sql.DB
+	rdb     *redis.Client
 	models  *store.Models
 	wg      sync.WaitGroup
 	mailer  mailer.Mailer
@@ -60,6 +64,13 @@ func (s *server) Run() {
 	defer db.Close()
 	s.db = db
 	s.models = store.NewModels(db)
+
+	s.logger.Info("we are connecting the redis client")
+	rdb, err := cache.ConnectRedis(s.config.RedisConfig.Host, s.config.RedisConfig.Password, s.config.RedisConfig.Port)
+	if err != nil {
+		s.logger.WithError(err).Fatal("something went wrong while connecting the redis client")
+	}
+	s.rdb = rdb
 
 	s.setupRoutes()
 

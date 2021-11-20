@@ -59,6 +59,11 @@ func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := s.rdb.Ping(ctx).Result(); err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
 	err := response.JSON(w, http.StatusOK, response.Envelope{
 		"status":      "available",
 		"environment": s.config.Env,
