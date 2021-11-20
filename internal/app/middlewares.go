@@ -132,7 +132,7 @@ func (s *server) rateLimit(next http.Handler) http.Handler {
 		s.limiter.mu.Lock()
 
 		if _, found := s.limiter.clients[ip]; !found {
-			s.limiter.clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
+			s.limiter.clients[ip] = &client{limiter: rate.NewLimiter(4, 6)}
 		}
 
 		s.limiter.clients[ip].lastSeen = time.Now()

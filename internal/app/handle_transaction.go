@@ -77,6 +77,9 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	ts.Account = *account
+	ts.User = *user
+
 	err = response.JSON(w, http.StatusCreated, response.Envelope{"transaction": ts})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
@@ -108,6 +111,8 @@ func (s *server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 		response.NotFoundResponse(w, r)
 		return
 	}
+
+	ts.User = *user
 
 	if err := response.JSON(w, http.StatusOK, response.Envelope{"transaction": ts}); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)

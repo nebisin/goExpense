@@ -22,6 +22,8 @@ type Transaction struct {
 	Payday      time.Time `json:"payday"`
 	CreatedAt   time.Time `json:"createdAt"`
 	Version     int       `json:"version"`
+	User        User      `json:"user,omitempty"`
+	Account     Account   `json:"account,omitempty"`
 	//Receipts    []string  `json:"receipts,omitempty"`
 }
 
@@ -52,9 +54,11 @@ RETURNING id, created_at, version`
 }
 
 func (m *transactionModel) Get(id int64) (*Transaction, error) {
-	query := `SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
-FROM transactions
-WHERE id = $1`
+	query := `SELECT t.id, t.user_id, t.account_id, t.type, t.title, t.description, t.tags, t.amount, t.payday, t.created_at, t.version,
+	u.id, u.email, u.name, u.created_at, u.version
+FROM transactions t
+LEFT JOIN users u ON t.user_id = u.id
+WHERE t.id = $1`
 
 	var ts Transaction
 
@@ -73,6 +77,11 @@ WHERE id = $1`
 		&ts.Payday,
 		&ts.CreatedAt,
 		&ts.Version,
+		&ts.User.ID,
+		&ts.User.Email,
+		&ts.User.Name,
+		&ts.User.CreatedAt,
+		&ts.User.Version,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecordNotFound
@@ -133,13 +142,15 @@ WHERE id = $1 AND user_id = $2`
 }
 
 func (m *transactionModel) GetAll(userId int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
-	query := fmt.Sprintf(`SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
-	FROM transactions
-	WHERE user_id = $1 
-	AND (to_tsvector('simple', title) @@ to_tsquery('simple', $2) OR $2='')
-	AND (tags @> $7 OR $7 = '{}')
-	AND payday >= $3 AND payday < $4
-	ORDER BY %s %s, id ASC
+	query := fmt.Sprintf(`SELECT t.id, t.user_id, t.account_id, t.type, t.title, t.description, t.tags, t.amount, t.payday, t.created_at, t.version,
+	a.id, a.title, a.created_at, a.version
+	FROM transactions t
+	LEFT JOIN accounts a ON t.account_id = a.id
+	WHERE t.user_id = $1 
+	AND (to_tsvector('simple', t.title) @@ to_tsquery('simple', $2) OR $2='')
+	AND (t.tags @> $7 OR $7 = '{}')
+	AND t.payday >= $3 AND t.payday < $4
+	ORDER BY t.%s %s, t.id ASC
 	LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
 
 	args := []interface{}{
@@ -178,6 +189,10 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 			&ts.Payday,
 			&ts.CreatedAt,
 			&ts.Version,
+			&ts.Account.ID,
+			&ts.Account.Title,
+			&ts.Account.CreatedAt,
+			&ts.Account.Version,
 		)
 		if err != nil {
 			return nil, err
@@ -194,11 +209,13 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 }
 
 func (m *transactionModel) GetAllByAccountID(accountID int64, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
-	query := fmt.Sprintf(`SELECT id, user_id, account_id, type, title, description, tags, amount, payday, created_at, version
-FROM transactions
-WHERE account_id=$1
-AND payday >= $2 AND payday < $3
-ORDER BY %s %s, id ASC 
+	query := fmt.Sprintf(`SELECT t.id, t.user_id, t.account_id, t.type, t.title, t.description, t.tags, t.amount, t.payday, t.created_at, t.version,
+	u.id, u.email, u.name, u.created_at, u.version
+FROM transactions t
+LEFT JOIN users u ON t.user_id = u.id
+WHERE t.account_id=$1
+AND t.payday >= $2 AND t.payday < $3
+ORDER BY t.%s %s, t.id ASC 
 LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 
 	args := []interface{}{
@@ -235,6 +252,11 @@ LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 			&ts.Payday,
 			&ts.CreatedAt,
 			&ts.Version,
+			&ts.User.ID,
+			&ts.User.Email,
+			&ts.User.Name,
+			&ts.User.CreatedAt,
+			&ts.User.Version,
 		)
 		if err != nil {
 			return nil, err
