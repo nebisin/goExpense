@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nebisin/goExpense/internal/cache"
 	"github.com/nebisin/goExpense/internal/store"
 	"github.com/nebisin/goExpense/pkg/auth"
 	"github.com/nebisin/goExpense/pkg/response"
@@ -45,7 +46,18 @@ func (s *server) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := s.models.Users.Get(payload.UserID)
+		user, err := s.cache.User.Get(payload.UserID)
+		if err != nil && err != cache.ErrRecordNotFound {
+			response.ServerErrorResponse(w, r, s.logger, err)
+			return
+		}
+		if user != nil {
+			r = s.contextSetUser(r, user)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		user, err = s.models.Users.Get(payload.UserID)
 		if err != nil {
 			if errors.Is(err, store.ErrRecordNotFound) {
 				response.InvalidAuthenticationTokenResponse(w, r)
@@ -54,6 +66,15 @@ func (s *server) authenticate(next http.Handler) http.Handler {
 			}
 			return
 		}
+
+		s.background(func() {
+			if err := s.cache.User.Set(user); err != nil {
+				s.logger.WithFields(map[string]interface{}{
+					"request_method": r.Method,
+					"request_url":    r.URL.String(),
+				}).WithError(err).Error("background cache error")
+			}
+		})
 
 		r = s.contextSetUser(r, user)
 

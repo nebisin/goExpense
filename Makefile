@@ -30,6 +30,9 @@ testdropdb:
 testmigrateup:
 	migrate -path ./migrations -database ${DB_URI} -verbose up
 
+redis:
+	docker run --name expense-redis -p6379:6379 -d redis:alpine
+
 test:
 	go test -v -cover ./...
 
