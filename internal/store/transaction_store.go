@@ -22,8 +22,8 @@ type Transaction struct {
 	Payday      time.Time `json:"payday"`
 	CreatedAt   time.Time `json:"createdAt"`
 	Version     int       `json:"version"`
-	User        User      `json:"user,omitempty"`
-	Account     Account   `json:"account,omitempty"`
+	User        *User     `json:"user,omitempty"`
+	Account     *Account  `json:"account,omitempty"`
 	//Receipts    []string  `json:"receipts,omitempty"`
 }
 
@@ -61,6 +61,7 @@ LEFT JOIN users u ON t.user_id = u.id
 WHERE t.id = $1`
 
 	var ts Transaction
+	var user User
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -77,15 +78,17 @@ WHERE t.id = $1`
 		&ts.Payday,
 		&ts.CreatedAt,
 		&ts.Version,
-		&ts.User.ID,
-		&ts.User.Email,
-		&ts.User.Name,
-		&ts.User.CreatedAt,
-		&ts.User.Version,
+		&user.ID,
+		&user.Email,
+		&user.Name,
+		&user.CreatedAt,
+		&user.Version,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecordNotFound
 	}
+
+	ts.User = &user
 
 	return &ts, err
 }
@@ -176,6 +179,7 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 
 	for rows.Next() {
 		var ts Transaction
+		var account Account
 
 		err := rows.Scan(
 			&ts.ID,
@@ -189,14 +193,16 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 			&ts.Payday,
 			&ts.CreatedAt,
 			&ts.Version,
-			&ts.Account.ID,
-			&ts.Account.Title,
-			&ts.Account.CreatedAt,
-			&ts.Account.Version,
+			&account.ID,
+			&account.Title,
+			&account.CreatedAt,
+			&account.Version,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		ts.Account = &account
 
 		transactions = append(transactions, &ts)
 	}
@@ -239,6 +245,7 @@ LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 
 	for rows.Next() {
 		var ts Transaction
+		var user User
 
 		err := rows.Scan(
 			&ts.ID,
@@ -252,15 +259,17 @@ LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 			&ts.Payday,
 			&ts.CreatedAt,
 			&ts.Version,
-			&ts.User.ID,
-			&ts.User.Email,
-			&ts.User.Name,
-			&ts.User.CreatedAt,
-			&ts.User.Version,
+			&user.ID,
+			&user.Email,
+			&user.Name,
+			&user.CreatedAt,
+			&user.Version,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		ts.User = &user
 
 		transactions = append(transactions, &ts)
 	}
