@@ -215,15 +215,6 @@ func (s *server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	s.background(func() {
-		if err := s.cache.User.Set(user); err != nil {
-			s.logger.WithFields(map[string]interface{}{
-				"request_method": r.Method,
-				"request_url":    r.URL.String(),
-			}).WithError(err).Error("background cache error")
-		}
-	})
-
 	err := response.JSON(w, http.StatusOK, response.Envelope{"user": user})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
@@ -271,15 +262,6 @@ func (s *server) handleActivateUser(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}
-
-	s.background(func() {
-		if err := s.cache.User.Set(user); err != nil {
-			s.logger.WithFields(map[string]interface{}{
-				"request_method": r.Method,
-				"request_url":    r.URL.String(),
-			}).WithError(err).Error("background cache error")
-		}
-	})
 
 	if err := response.JSON(w, http.StatusOK, response.Envelope{"user": user}); err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
@@ -330,15 +312,6 @@ func (s *server) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}
-
-	s.background(func() {
-		if err := s.cache.User.Set(user); err != nil {
-			s.logger.WithFields(map[string]interface{}{
-				"request_method": r.Method,
-				"request_url":    r.URL.String(),
-			}).WithError(err).Error("background cache error")
-		}
-	})
 
 	env := response.Envelope{"message": "your password was successfully reset"}
 	err = response.JSON(w, http.StatusOK, env)
