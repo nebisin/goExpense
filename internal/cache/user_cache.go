@@ -49,5 +49,5 @@ func (c *UserCache) Set(user *store.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	return c.rdb.Set(ctx, fmt.Sprintf("users.%d", user.ID), val, time.Hour*2).Err()
+	return c.rdb.Set(ctx, fmt.Sprintf("users.%d", user.ID), val, time.Minute*12).Err()
 }
