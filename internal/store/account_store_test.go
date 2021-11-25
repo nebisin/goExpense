@@ -142,3 +142,19 @@ func TestAccountModel_GetAll(t *testing.T) {
 
 	require.WithinDuration(t, accounts[0].CreatedAt, account.CreatedAt, time.Second)
 }
+
+func TestAccountModel_RemoveUser(t *testing.T) {
+	account := createRandomAccount(t)
+
+	err := testModels.Accounts.AddUser(account.OwnerID, account.ID)
+	require.NoError(t, err)
+
+	users, err := testModels.Accounts.GetUsers(account.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, users)
+
+	require.Equal(t, users[0].ID, account.OwnerID)
+
+	err = testModels.Accounts.RemoveUser(account.OwnerID, account.ID)
+	require.NoError(t, err)
+}
