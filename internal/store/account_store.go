@@ -167,3 +167,80 @@ LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
 
 	return accounts, nil
 }
+
+func (m *accountModel) AddUser(userID int64, accountID int64) error {
+	query := `INSERT INTO users_accounts (user_id, account_id)
+	VALUES ($1, $2)`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := m.DB.ExecContext(ctx, query, userID, accountID)
+
+	return err
+}
+
+func (m *accountModel) RemoveUser(userID int64, accountID int64) error {
+	query := `DELETE FROM users_accounts
+	WHERE user_id=$1 AND account_id=$2`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, userID, accountID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
+	return nil
+}
+
+func (m *accountModel) GetUsers(accountID int64) ([]*User, error) {
+	query := `SELECT u.id, u.email, u.name, u.created_at, u.version
+	FROM users_accounts a
+	LEFT JOIN users u ON a.user_id = u.id
+	WHERE account_id=$1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*User{}
+
+	for rows.Next() {
+		var user User
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.Name,
+			&user.CreatedAt,
+			&user.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
