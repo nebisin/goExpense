@@ -55,13 +55,16 @@ RETURNING id, created_at, version`
 
 func (m *transactionModel) Get(id int64) (*Transaction, error) {
 	query := `SELECT t.id, t.user_id, t.account_id, t.type, t.title, t.description, t.tags, t.amount, t.payday, t.created_at, t.version,
-	u.id, u.email, u.name, u.created_at, u.version
+	u.id, u.email, u.name, u.created_at, u.version,
+	a.id, a.owner_id, a.title, a.description, a.total_income, a.total_expense, a.currency, a.created_at, a.version
 FROM transactions t
 LEFT JOIN users u ON t.user_id = u.id
+LEFT JOIN accounts a ON t.account_id = a.id
 WHERE t.id = $1`
 
 	var ts Transaction
 	var user User
+	var account Account
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -83,12 +86,22 @@ WHERE t.id = $1`
 		&user.Name,
 		&user.CreatedAt,
 		&user.Version,
+		&account.ID,
+		&account.OwnerID,
+		&account.Title,
+		&account.Description,
+		&account.TotalExpense,
+		&account.TotalExpense,
+		&account.Currency,
+		&account.CreatedAt,
+		&account.Version,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecordNotFound
 	}
 
 	ts.User = &user
+	ts.Account = &account
 
 	return &ts, err
 }
@@ -146,7 +159,7 @@ WHERE id = $1 AND user_id = $2`
 
 func (m *transactionModel) GetAll(userId int64, title string, tags []string, startedAt time.Time, before time.Time, filters Filters) ([]*Transaction, error) {
 	query := fmt.Sprintf(`SELECT t.id, t.user_id, t.account_id, t.type, t.title, t.description, t.tags, t.amount, t.payday, t.created_at, t.version,
-	a.id, a.title, a.created_at, a.version
+	a.id, a.owner_id, a.title, a.description, a.total_income, a.total_expense, a.currency, a.created_at, a.version
 	FROM transactions t
 	LEFT JOIN accounts a ON t.account_id = a.id
 	WHERE t.user_id = $1 
@@ -194,7 +207,12 @@ func (m *transactionModel) GetAll(userId int64, title string, tags []string, sta
 			&ts.CreatedAt,
 			&ts.Version,
 			&account.ID,
+			&account.OwnerID,
 			&account.Title,
+			&account.Description,
+			&account.TotalExpense,
+			&account.TotalExpense,
+			&account.Currency,
 			&account.CreatedAt,
 			&account.Version,
 		)
