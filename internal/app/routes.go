@@ -45,7 +45,8 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetAccount)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteAccount)).Methods(http.MethodDelete)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateAccount)).Methods(http.MethodPatch)
-	apiV1.HandleFunc("/accounts/{id:[0-9]+}/users", s.requireAuthenticatedUser(s.handleUpdateAccount)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}/users", s.requireAuthenticatedUser(s.handleAddUser)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}/users", s.requireAuthenticatedUser(s.handleGetUsers)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/accounts", s.requireAuthenticatedUser(s.handleListAccounts)).Methods(http.MethodGet)
 
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}/transactions", s.requireAuthenticatedUser(s.handleListTransactionsByAccount)).Methods(http.MethodGet)

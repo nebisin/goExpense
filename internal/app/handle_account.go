@@ -209,7 +209,7 @@ func (s *server) handleListAccounts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) HandleAddUser(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleAddUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
@@ -262,6 +262,26 @@ func (s *server) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = response.JSON(w, http.StatusOK, response.Envelope{"message": "user is added to the account"})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handleGetUsers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	users, err := s.models.Accounts.GetUsers(id)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	err = response.JSON(w, http.StatusOK, response.Envelope{"users": users})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
