@@ -281,6 +281,20 @@ func (s *server) handleGetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user := s.contextGetUser(r)
+
+	isMember := false
+	for _, value := range users {
+		if value.ID == user.ID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
 	err = response.JSON(w, http.StatusOK, response.Envelope{"users": users})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)

@@ -22,7 +22,7 @@ func (m *Models) CreateAccountTX(account *Account) error {
 		return err
 	}
 
-	err = txModels.Accounts.AddUser(account.ID, account.OwnerID)
+	err = txModels.Accounts.AddUser(account.OwnerID, account.ID)
 	if err != nil {
 		return err
 	}
