@@ -181,3 +181,47 @@ func (m *userModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error
 
 	return &user, nil
 }
+
+func (m *userModel) GetAccounts(userID int64) ([]*Account, error) {
+	query := `SELECT a.id, a.owner_id, a.title, a.description, a.total_income, a.total_expense, a.currency, a.created_at, a.version
+	FROM users_accounts u
+	LEFT JOIN accounts a ON u.account_id = a.id
+	WHERE u.user_id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	accounts := []*Account{}
+	for rows.Next() {
+		var account Account
+
+		err := rows.Scan(
+			&account.ID,
+			&account.OwnerID,
+			&account.Title,
+			&account.Description,
+			&account.TotalIncome,
+			&account.TotalExpense,
+			&account.Currency,
+			&account.CreatedAt,
+			&account.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		accounts = append(accounts, &account)
+
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
+}

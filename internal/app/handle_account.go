@@ -45,7 +45,7 @@ func (s *server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 		account.TotalIncome = input.InitialBalance
 	}
 
-	err := s.models.Accounts.Insert(&account)
+	err := s.models.CreateAccountTX(&account)
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 		return
@@ -204,6 +204,84 @@ func (s *server) handleListAccounts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = response.JSON(w, http.StatusOK, response.Envelope{"accounts": accounts})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handleAddUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	var input struct {
+		Email string `json:"email" validate:"required,email"`
+	}
+
+	err = request.ReadJSON(w, r, &input)
+	if err != nil {
+		response.BadRequestResponse(w, r, err)
+		return
+	}
+
+	if err := request.Validate(input); err != nil {
+		response.FailedValidationResponse(w, r, err)
+		return
+	}
+
+	account, err := s.models.Accounts.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			response.NotFoundResponse(w, r)
+		} else {
+			response.ServerErrorResponse(w, r, s.logger, err)
+		}
+		return
+	}
+
+	auth := s.contextGetUser(r)
+	if auth.ID != account.OwnerID {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	user, err := s.models.Users.GetByEmail(input.Email)
+	if err != nil {
+		// TODO: If email is not exists in database send an invitation
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	err = s.models.Accounts.AddUser(user.ID, account.ID)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	err = response.JSON(w, http.StatusOK, response.Envelope{"message": "user is added to the account"})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
+
+func (s *server) handleGetUsers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		response.NotFoundResponse(w, r)
+		return
+	}
+
+	users, err := s.models.Accounts.GetUsers(id)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	err = response.JSON(w, http.StatusOK, response.Envelope{"users": users})
 	if err != nil {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}

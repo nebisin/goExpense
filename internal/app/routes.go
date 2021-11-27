@@ -27,6 +27,7 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/users", s.handleRegisterUser).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users", s.requireAuthenticatedUser(s.handleUpdateUser)).Methods(http.MethodPatch)
 	apiV1.HandleFunc("/users/me", s.requireAuthenticatedUser(s.handleGetMe)).Methods(http.MethodGet)
+	apiV1.HandleFunc("/users/accounts", s.requireAuthenticatedUser(s.handleGetAccounts)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/users/activate", s.handleActivateUser).Methods(http.MethodPut)
 	apiV1.HandleFunc("/users/authenticate", s.handleLoginUser).Methods(http.MethodPost)
 	apiV1.HandleFunc("/users/password", s.handlePasswordReset).Methods(http.MethodPut)
@@ -44,6 +45,8 @@ func (s *server) setupRoutes() {
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleGetAccount)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleDeleteAccount)).Methods(http.MethodDelete)
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}", s.requireAuthenticatedUser(s.handleUpdateAccount)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}/users", s.requireAuthenticatedUser(s.handleAddUser)).Methods(http.MethodPatch)
+	apiV1.HandleFunc("/accounts/{id:[0-9]+}/users", s.requireAuthenticatedUser(s.handleGetUsers)).Methods(http.MethodGet)
 	apiV1.HandleFunc("/accounts", s.requireAuthenticatedUser(s.handleListAccounts)).Methods(http.MethodGet)
 
 	apiV1.HandleFunc("/accounts/{id:[0-9]+}/transactions", s.requireAuthenticatedUser(s.handleListTransactionsByAccount)).Methods(http.MethodGet)

@@ -155,3 +155,16 @@ func TestUserModel_GetForToken(t *testing.T) {
 
 	require.Equal(t, user.ID, token.UserID)
 }
+
+func TestUserModel_GetAccounts(t *testing.T) {
+	account := createRandomAccount(t)
+
+	err := testModels.Accounts.AddUser(account.OwnerID, account.ID)
+	require.NoError(t, err)
+
+	accounts, err := testModels.Users.GetAccounts(account.OwnerID)
+	require.NoError(t, err)
+	require.NotEmpty(t, accounts)
+
+	require.Equal(t, account.ID, accounts[0].ID)
+}

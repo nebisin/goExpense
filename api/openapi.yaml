@@ -1,0 +1,531 @@
+openapi: 3.0.0
+info:
+  title: ihtisap API
+  description: An advanced income and expense tracker application
+  version: 0.1.0
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Development server
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: A JSON object of user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Failed validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FailedValidationResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update user
+      tags:
+        - users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized user response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Failed validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FailedValidationResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/me:
+    get:
+      summary: Get authenticated user
+      tags:
+        - users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized user response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Failed validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FailedValidationResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/authenticate:
+    post:
+      summary: Get authentication token
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUserRequest"
+      responses:
+        "200":
+          description: Login user response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authenticationToken:
+                    description: JWT authentication token
+                    type: string
+        "400":
+          description: Bad request response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized user response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Failed validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FailedValidationResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /accounts:
+    post:
+      summary: Create account handler
+      tags:
+        - accounts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAccountRequest"
+      responses:
+        "201":
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account:
+                    $ref: "#/components/schemas/Account"
+        "400":
+          description: Bad request response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized user response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Failed validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FailedValidationResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /accounts/{id}:
+    get:
+      summary: Get account by id handler
+      tags:
+        - accounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Account information for given id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          description: Not Found Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad request response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized user response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /transactions:
+    post:
+      summary: Create new transaction
+      tags:
+        - transactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionRequest"
+      responses:
+        "201":
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction:
+                    $ref: "#/components/schemas/Transaction"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: johndoe@example.com
+        createdAt:
+          type: string
+          format: date-time
+        isActivated:
+          type: boolean
+          example: false
+        version:
+          type: integer
+          minimum: 1
+      required:
+        - id
+        - name
+        - email
+        - createdAt
+        - isActivated
+        - version
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        title:
+          type: string
+          example: Personel Account
+        description:
+          type: string
+          example: lorem ipsum dolor sit amet
+        totalIncome:
+          type: number
+          format: float64
+        totalExpense:
+          type: number
+          format: float64
+        currency:
+          type: string
+          example: USD
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+      required:
+        - id
+        - title
+        - totalIncome
+        - totalExpense
+        - currency
+        - createdAt
+        - version
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        userID:
+          type: integer
+          format: int64
+          minimum: 1
+        accountID:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        amount:
+          type: number
+          format: float64
+          minimum: 1
+        payday:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+        account:
+          $ref: "#/components/schemas/Account"
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - userID
+        - accountID
+        - type
+        - title
+        - amount
+        - payday
+        - createdAt
+        - version
+    CreateTransactionRequest:
+      type: object
+      properties:
+        accountID:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          type: string
+          example: "income"
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        amount:
+          type: number
+          format: float64
+          minimum: 1
+        payday:
+          type: string
+          format: date-time
+      required:
+        - accountID
+        - type
+        - title
+        - amount
+        - payday
+    CreateAccountRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Personel Account
+        description:
+          type: string
+          example: lorem ipsum dolor sit amet
+        initialBalance:
+          type: number
+          format: float64
+        currency:
+          type: string
+          example: USD
+      required:
+        - title
+        - currency
+        - initialBalance
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: johndoe@example.com
+        password:
+          type: string
+          minLength: 8
+      required:
+        - name
+        - email
+        - password
+    LoginUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: johndoe@example.com
+        password:
+          type: string
+          minLength: 8
+      required:
+        - email
+        - password
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: johndoe@example.com
+        password:
+          type: string
+          minLength: 8
+        oldPassword:
+          type: string
+          minLength: 8
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    FailedValidationResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+      required:
+        - errors

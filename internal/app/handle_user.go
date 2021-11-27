@@ -329,3 +329,18 @@ func (s *server) handleGetMe(w http.ResponseWriter, r *http.Request) {
 		response.ServerErrorResponse(w, r, s.logger, err)
 	}
 }
+
+func (s *server) handleGetAccounts(w http.ResponseWriter, r *http.Request) {
+	user := s.contextGetUser(r)
+
+	accounts, err := s.models.Users.GetAccounts(user.ID)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	err = response.JSON(w, http.StatusOK, response.Envelope{"accounts": accounts})
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+	}
+}
