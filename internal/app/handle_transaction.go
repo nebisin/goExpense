@@ -34,6 +34,23 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 	}
 
 	user := s.contextGetUser(r)
+	users, err := s.models.Accounts.GetUsers(input.AccountID)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
+	isMember := false
+	for _, value := range users {
+		if value.ID == user.ID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		response.NotFoundResponse(w, r)
+		return
+	}
 
 	account, err := s.models.Accounts.Get(input.AccountID)
 	if err != nil {
@@ -42,12 +59,6 @@ func (s *server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 		} else {
 			response.ServerErrorResponse(w, r, s.logger, err)
 		}
-		return
-	}
-
-	// TODO: Update this while implementing the shared accounts
-	if user.ID != account.OwnerID {
-		response.NotPermittedResponse(w, r)
 		return
 	}
 
@@ -325,11 +336,23 @@ func (s *server) handleListTransactionsByAccount(w http.ResponseWriter, r *http.
 		return
 	}
 
+	users, err := s.models.Accounts.GetUsers(id)
+	if err != nil {
+		response.ServerErrorResponse(w, r, s.logger, err)
+		return
+	}
+
 	user := s.contextGetUser(r)
 
-	// TODO: Update this while implementing the shared accounts
-	if user.ID != account.OwnerID {
-		response.NotPermittedResponse(w, r)
+	isMember := false
+	for _, value := range users {
+		if value.ID == user.ID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		response.NotFoundResponse(w, r)
 		return
 	}
 

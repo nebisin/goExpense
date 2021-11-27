@@ -7,6 +7,29 @@ servers:
   - url: http://localhost:4000/api/v1
     description: Development server
 paths:
+  /healthcheck:
+    get:
+      summary: Health check for api
+      responses:
+        "200":
+          description: Healtch check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  environment:
+                    type: string
+                  version:
+                    type: string
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /users:
     post:
       summary: Create a new user
@@ -306,6 +329,117 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /accounts/{id}/statistics:
+    get:
+      summary: Get statistics for the account
+      tags:
+        - accounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+            example: "2022-11-29T00:00:00Z"
+          required: false
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+          required: false
+      responses:
+        "200":
+          description: Statistics for the account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statistics:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Statistic"
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /accounts/{id}/transactions:
+    get:
+      summary: Get transactions for the account
+      tags:
+        - accounts
+        - transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          required: false
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+            example: "2021-01-30T08:30:00Z"
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, -id, title, -title, payday, -payday]
+          required: false
+      responses:
+        "200":
+          description: Transactions for the account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /transactions:
     post:
       summary: Create new transaction
@@ -371,6 +505,35 @@ components:
         - email
         - createdAt
         - isActivated
+        - version
+    Statistic:
+      type: object
+      properties:
+        accountID:
+          type: integer
+          format: int64
+          minimum: 1
+        date:
+          type: string
+          format: date-time
+        earning:
+          type: number
+          format: float64
+        spending:
+          type: number
+          format: float64
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+      required:
+        - accountID
+        - date
+        - earning
+        - spending
+        - createdAt
         - version
     Account:
       type: object
@@ -469,6 +632,7 @@ components:
           minimum: 1
         type:
           type: string
+          enum: [income, expense]
           example: "income"
         title:
           type: string
