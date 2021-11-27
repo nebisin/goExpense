@@ -10,6 +10,15 @@ services:
     image: redis:alpine
     command: >
       --requirepass mysecretpassword
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui-container
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/usr/share/nginx/html/api
+    environment:
+      API_URL: "api/openapi.yaml"
   api:
     build:
       context: .
