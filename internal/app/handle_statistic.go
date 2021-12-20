@@ -1,14 +1,13 @@
 package app
 
 import (
-	"errors"
-	"github.com/gorilla/mux"
-	"github.com/nebisin/goExpense/internal/store"
-	"github.com/nebisin/goExpense/pkg/request"
-	"github.com/nebisin/goExpense/pkg/response"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/nebisin/goExpense/pkg/request"
+	"github.com/nebisin/goExpense/pkg/response"
 )
 
 func (s *server) handleListStatisticsByAccount(w http.ResponseWriter, r *http.Request) {
@@ -19,21 +18,22 @@ func (s *server) handleListStatisticsByAccount(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	account, err := s.models.Accounts.Get(id)
+	user := s.contextGetUser(r)
+	users, err := s.models.Accounts.GetUsers(id)
 	if err != nil {
-		if errors.Is(err, store.ErrRecordNotFound) {
-			response.NotFoundResponse(w, r)
-		} else {
-			response.ServerErrorResponse(w, r, s.logger, err)
-		}
+		response.ServerErrorResponse(w, r, s.logger, err)
 		return
 	}
 
-	user := s.contextGetUser(r)
-
-	// TODO: Update this while implementing the shared accounts
-	if user.ID != account.OwnerID {
-		response.NotPermittedResponse(w, r)
+	isMember := false
+	for _, value := range users {
+		if value.ID == user.ID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		response.NotFoundResponse(w, r)
 		return
 	}
 

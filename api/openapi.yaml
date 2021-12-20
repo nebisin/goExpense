@@ -7,6 +7,29 @@ servers:
   - url: http://localhost:4000/api/v1
     description: Development server
 paths:
+  /healthcheck:
+    get:
+      summary: Health check for api
+      responses:
+        "200":
+          description: Healtch check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  environment:
+                    type: string
+                  version:
+                    type: string
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /users:
     post:
       summary: Create a new user
@@ -28,20 +51,14 @@ paths:
                 properties:
                   user:
                     $ref: "#/components/schemas/User"
-        "400":
-          description: Bad request response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Failed validation response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FailedValidationResponse"
-        "500":
-          description: Internal server error
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -68,26 +85,14 @@ paths:
                 properties:
                   user:
                     $ref: "#/components/schemas/User"
-        "400":
-          description: Bad request response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized user response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Failed validation response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FailedValidationResponse"
-        "500":
-          description: Internal server error
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -109,18 +114,6 @@ paths:
                 properties:
                   user:
                     $ref: "#/components/schemas/User"
-        "400":
-          description: Bad request response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized user response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Failed validation response
           content:
@@ -155,26 +148,40 @@ paths:
                   authenticationToken:
                     description: JWT authentication token
                     type: string
-        "400":
-          description: Bad request response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized user response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Failed validation response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FailedValidationResponse"
-        "500":
-          description: Internal server error
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/accounts:
+    get:
+      summary: Get all accounts for authenticated user
+      tags:
+        - users
+        - accounts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account list for user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Account"
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -202,26 +209,14 @@ paths:
                 properties:
                   account:
                     $ref: "#/components/schemas/Account"
-        "400":
-          description: Bad request response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized user response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Failed validation response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FailedValidationResponse"
-        "500":
-          description: Internal server error
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -248,26 +243,199 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Account"
-        "404":
-          description: Not Found Response
+        default:
+          description: Error response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "400":
-          description: Bad request response
+  /accounts/{id}/users:
+    patch:
+      summary: Add a user to account
+      tags:
+        - accounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "johndoe2@example.com"
+      responses:
+        "201":
+          description: "user is added to the account"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "user is added to the account"
+        "422":
+          description: Failed validation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FailedValidationResponse"
+        default:
+          description: Error response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized user response
+    get:
+      summary: Get all users for an account
+      tags:
+        - accounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: All users that are members to the account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        default:
+          description: Error response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal server error
+  /accounts/{id}/statistics:
+    get:
+      summary: Get statistics for the account
+      tags:
+        - accounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+            example: "2022-11-29T00:00:00Z"
+          required: false
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+          required: false
+      responses:
+        "200":
+          description: Statistics for the account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statistics:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Statistic"
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /accounts/{id}/transactions:
+    get:
+      summary: Get transactions for the account
+      tags:
+        - accounts
+        - transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          required: false
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+            example: "2021-01-30T08:30:00Z"
+          required: false
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, -id, title, -title, payday, -payday]
+          required: false
+      responses:
+        "200":
+          description: Transactions for the account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+        default:
+          description: Error response
           content:
             application/json:
               schema:
@@ -295,6 +463,12 @@ paths:
                 properties:
                   transaction:
                     $ref: "#/components/schemas/Transaction"
+        default:
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:
@@ -331,6 +505,35 @@ components:
         - email
         - createdAt
         - isActivated
+        - version
+    Statistic:
+      type: object
+      properties:
+        accountID:
+          type: integer
+          format: int64
+          minimum: 1
+        date:
+          type: string
+          format: date-time
+        earning:
+          type: number
+          format: float64
+        spending:
+          type: number
+          format: float64
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+      required:
+        - accountID
+        - date
+        - earning
+        - spending
+        - createdAt
         - version
     Account:
       type: object
@@ -429,6 +632,7 @@ components:
           minimum: 1
         type:
           type: string
+          enum: [income, expense]
           example: "income"
         title:
           type: string
